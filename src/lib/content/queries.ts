@@ -104,9 +104,9 @@ export async function getDepartmentBySlug(slug: string): Promise<Department | nu
 /**
  * Events that have not finished yet, soonest first.
  *
- * `now` is injectable so pages and tests can pin it. The seed dates sit in
- * 2024, so callers that want them to still read as "upcoming" can pass a fixed
- * reference point rather than the wall clock.
+ * `now` is injectable so pages and tests can pin it rather than depending on
+ * the wall clock. If every seed event has passed, the full list is returned so
+ * the homepage section never renders empty.
  */
 export async function getUpcomingEvents(limit?: number, now = new Date()): Promise<CampusEvent[]> {
   const upcoming = seed.events

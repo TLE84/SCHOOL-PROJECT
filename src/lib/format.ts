@@ -25,7 +25,7 @@ const TIME = new Intl.DateTimeFormat('en-GB', {
 const MONTH_SHORT = new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'UTC' });
 const DAY = new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone: 'UTC' });
 
-/** e.g. "15 May 2024" */
+/** e.g. "15 May 2026" */
 export function formatDate(iso: string): string {
   return DATE.format(new Date(iso));
 }

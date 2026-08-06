@@ -8,7 +8,7 @@ export function BreakingNews() {
         <div className="flex items-center gap-4 min-w-0">
           <span className="font-bold bg-green-900 px-2 py-0.5 rounded text-xs tracking-wider shrink-0">BREAKING</span>
           <span className="font-medium truncate">
-            PTI wins Best Polytechnic in Innovation at the 2024 National Education Excellence Awards
+            PTI wins Best Polytechnic in Innovation at the 2026 National Education Excellence Awards
           </span>
         </div>
         <div className="hidden md:flex gap-1.5 opacity-80">
