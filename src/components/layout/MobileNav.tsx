@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from "next/image";
 import { usePathname } from 'next/navigation';
 import { Menu, X, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -113,7 +114,7 @@ export function MobileNav() {
         )}
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-          <span className="font-serif text-lg font-bold text-green-900">PTI NEWS</span>
+          <Image src="/images/pti-logo.png" alt="PTI Logo" width={180} height={50} className="h-8 w-auto" />
           <button
             type="button"
             data-autofocus

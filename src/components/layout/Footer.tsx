@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { getCategories } from '@/lib/content/queries';
 
@@ -23,10 +24,8 @@ export async function Footer() {
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center text-green-900 font-bold font-serif text-lg">PTI</div>
-            <div>
-              <div className="font-serif font-bold text-xl leading-none">PTI NEWS</div>
-              <div className="text-xs text-green-200 mt-1">Digital Information Hub</div>
+            <div className="bg-white p-3 rounded-xl inline-block shadow-sm">
+              <Image src="/images/pti-logo.png" alt="PTI Logo" width={200} height={60} className="h-10 w-auto" />
             </div>
           </div>
           <p className="text-sm text-green-100 mb-6 leading-relaxed">
