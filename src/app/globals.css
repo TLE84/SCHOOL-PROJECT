@@ -5,8 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-serif: var(--font-playfair);
+  /* Both are loaded via next/font in layout.tsx, which declares the
+     --font-* vars on <html>. They must be declared on the same element
+     these resolve against, or they collapse to empty. */
+  --font-sans: var(--font-inter), sans-serif;
+  --font-serif: var(--font-playfair), serif;
 
   /* Brand Green Scale */
   --color-green-50: #F2FBF7;
@@ -48,20 +51,10 @@
   --text-body-sm: 16px;
   --text-caption: 12px;
 
-  /* Spacing Scale */
-  --spacing-2: 2px;
-  --spacing-4: 4px;
-  --spacing-8: 8px;
-  --spacing-12: 12px;
-  --spacing-16: 16px;
-  --spacing-24: 24px;
-  --spacing-32: 32px;
-  --spacing-40: 40px;
-  --spacing-48: 48px;
-  --spacing-64: 64px;
-  --spacing-80: 80px;
-  --spacing-96: 96px;
-  --spacing-128: 128px;
+  /* Spacing: Tailwind's default 4px-step scale (`calc(var(--spacing) * n)`)
+     is used as-is. Do not define individual `--spacing-<n>` keys here — a
+     defined key overrides the formula for that step only, which silently
+     rescales some utilities and not others (e.g. `gap-10` > `gap-12`). */
 
   /* Radius Scale */
   --radius-sm: 4px;
