@@ -17,7 +17,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   if (!department) return { title: 'Department not found' };
 
-  return { title: department.name, description: department.description };
+  return {
+    title: department.name,
+    description:
+      department.description ??
+      `News from the Department of ${department.name} at the Petroleum Training Institute.`,
+  };
 }
 
 export default async function DepartmentPage({ params }: Params) {
@@ -31,12 +36,14 @@ export default async function DepartmentPage({ params }: Params) {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 max-w-7xl">
       <PageHeader
-        title={department.name}
+        title={
+          department.abbreviation ? `${department.name} (${department.abbreviation})` : department.name
+        }
         description={department.description}
         crumbs={[
           { label: 'Home', href: '/' },
           { label: 'Departments', href: '/departments' },
-          { label: department.name },
+          { label: department.abbreviation ?? department.name },
         ]}
       />
 

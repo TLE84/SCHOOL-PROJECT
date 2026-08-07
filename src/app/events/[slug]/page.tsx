@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { getAllEventSlugs, getEventBySlug, getUpcomingEvents } from '@/lib/content/queries';
-import { formatDate, formatTimeRange } from '@/lib/format';
+import { formatDate, formatDateRange, formatTimeRange } from '@/lib/format';
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -31,8 +31,16 @@ export default async function EventPage({ params }: Params) {
   const others = (await getUpcomingEvents()).filter((item) => item.slug !== event.slug).slice(0, 3);
 
   const details = [
-    { Icon: Calendar, label: 'Date', value: formatDate(event.startsAt), dateTime: event.startsAt },
-    { Icon: Clock, label: 'Time', value: formatTimeRange(event.startsAt, event.endsAt) },
+    {
+      Icon: Calendar,
+      label: 'Date',
+      value: event.allDay ? formatDateRange(event.startsAt, event.endsAt) : formatDate(event.startsAt),
+      dateTime: event.startsAt,
+    },
+    // Times are omitted entirely for all-day events rather than guessed.
+    ...(event.allDay
+      ? []
+      : [{ Icon: Clock, label: 'Time', value: formatTimeRange(event.startsAt, event.endsAt) }]),
     { Icon: MapPin, label: 'Location', value: event.location },
   ];
 

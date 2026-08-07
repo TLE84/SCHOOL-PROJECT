@@ -1,5 +1,5 @@
 import * as seed from './seed';
-import type { Article, CampusEvent, Category, Department, Paginated } from './types';
+import type { Article, CampusEvent, Category, CertificateCourse, Department, Paginated } from './types';
 
 /**
  * The site's read API.
@@ -115,6 +115,19 @@ export async function getUpcomingEvents(limit?: number, now = new Date()): Promi
 
   const list = upcoming.length > 0 ? upcoming : seed.events.slice().sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
   return typeof limit === 'number' ? list.slice(0, limit) : list;
+}
+
+/** Events that have already finished, most recent first. */
+export async function getPastEvents(limit?: number, now = new Date()): Promise<CampusEvent[]> {
+  const past = seed.events
+    .filter((event) => Date.parse(event.endsAt ?? event.startsAt) < now.getTime())
+    .sort((a, b) => Date.parse(b.startsAt) - Date.parse(a.startsAt));
+
+  return typeof limit === 'number' ? past.slice(0, limit) : past;
+}
+
+export async function getCertificateCourses(): Promise<CertificateCourse[]> {
+  return seed.certificateCourses;
 }
 
 export async function getEventBySlug(slug: string): Promise<CampusEvent | null> {

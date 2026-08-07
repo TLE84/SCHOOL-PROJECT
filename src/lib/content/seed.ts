@@ -1,4 +1,4 @@
-import type { Article, Author, CampusEvent, Category, Department } from './types';
+import type { Article, Author, CampusEvent, Category, CertificateCourse, Department } from './types';
 
 /**
  * Placeholder editorial content.
@@ -82,18 +82,75 @@ const byCategorySlug = (slug: string): Category => {
   return found;
 };
 
+/**
+ * The institute's academic departments.
+ *
+ * Names and abbreviations as supplied. Descriptions are deliberately absent —
+ * no prose has been provided, and writing it here would attach invented claims
+ * to real academic units. The department pages render without it.
+ */
 export const departments: Department[] = [
-  { id: 'dept-petroleum', name: 'Petroleum Engineering', slug: 'petroleum-engineering', description: 'Drilling, production and reservoir engineering programmes underpinning the institute’s founding mandate.' },
-  { id: 'dept-mechanical', name: 'Mechanical Engineering', slug: 'mechanical-engineering', description: 'Design, manufacturing, thermodynamics and plant maintenance across the energy sector.' },
-  { id: 'dept-electrical', name: 'Electrical and Electronic Engineering', slug: 'electrical-electronic-engineering', description: 'Power systems, instrumentation and control engineering for industrial operations.' },
-  { id: 'dept-chemical', name: 'Chemical Engineering', slug: 'chemical-engineering', description: 'Process engineering, refining and petrochemical operations.' },
-  { id: 'dept-welding', name: 'Welding Engineering and Offshore Technology', slug: 'welding-offshore-technology', description: 'Fabrication, inspection and offshore installation practice.' },
-  { id: 'dept-marine', name: 'Marine Engineering', slug: 'marine-engineering', description: 'Marine propulsion, vessel systems and offshore logistics.' },
-  { id: 'dept-science', name: 'Science Laboratory Technology', slug: 'science-laboratory-technology', description: 'Analytical chemistry, environmental testing and laboratory practice.' },
-  { id: 'dept-general', name: 'General Studies', slug: 'general-studies', description: 'Communication, entrepreneurship and the humanities across all programmes.' },
+  { id: 'dept-csit', name: 'Computer Science and Information Technology', abbreviation: 'CSIT', slug: 'computer-science-information-technology' },
+  { id: 'dept-cet', name: 'Computer Engineering and Technology', abbreviation: 'CET', slug: 'computer-engineering-technology' },
+  { id: 'dept-pngpd', name: 'Petroleum and Natural Gas Processing', abbreviation: 'PNGPD', slug: 'petroleum-natural-gas-processing' },
+  { id: 'dept-eeed', name: 'Electrical and Electronic Engineering', abbreviation: 'EEED', slug: 'electrical-electronic-engineering' },
+  { id: 'dept-pmbs', name: 'Petroleum Marketing and Business Studies', abbreviation: 'PMBS', slug: 'petroleum-marketing-business-studies' },
+  { id: 'dept-weot', name: 'Welding Engineering and Offshore Technology', abbreviation: 'WEOT', slug: 'welding-engineering-offshore-technology' },
+  { id: 'dept-mech', name: 'Mechanical Engineering', slug: 'mechanical-engineering' },
+  { id: 'dept-slt', name: 'Science Laboratory and Technology', abbreviation: 'SLT', slug: 'science-laboratory-technology' },
+  { id: 'dept-esmt', name: 'Environmental Science and Management Technology', abbreviation: 'ESMT', slug: 'environmental-science-management-technology' },
+  { id: 'dept-iset', name: 'Industrial Safety and Environmental Technology', abbreviation: 'ISET', slug: 'industrial-safety-environmental-technology' },
+  { id: 'dept-peg', name: 'Petroleum Engineering and Geosciences', abbreviation: 'PEG', slug: 'petroleum-engineering-geosciences' },
 ];
 
+/** Short certificate programmes offered alongside the departments. */
+export const certificateCourses: CertificateCourse[] = [
+  { id: 'cert-general-welding', name: 'General Welding', slug: 'general-welding' },
+  { id: 'cert-commercial-diving', name: 'Commercial Diving', slug: 'commercial-diving' },
+];
+
+/**
+ * Validates an article's department slug at module load.
+ *
+ * An unknown slug would not throw — the article would simply stop appearing on
+ * every department page, silently. Failing loudly here is cheaper to notice.
+ */
+const inDepartment = (slug: string): string => {
+  if (!departments.some((department) => department.slug === slug)) {
+    throw new Error(`Unknown department slug in seed data: ${slug}`);
+  }
+  return slug;
+};
+
 export const articles: Article[] = [
+  {
+    id: 'art-admissions-2026-2027',
+    title: 'Applications Open for the 2026/2027 Academic Session',
+    slug: 'admissions-2026-2027-open',
+    excerpt:
+      'The institute is processing applications for HND and certificate programmes for the 2026/2027 academic session through the official PTI website.',
+    content: [
+      { type: 'paragraph', text: 'The Petroleum Training Institute is currently processing applications for the 2026/2027 academic session. Applications are being received through the official PTI website.' },
+      { type: 'heading', id: 'programmes', text: 'Programmes Covered' },
+      { type: 'paragraph', text: 'The current intake covers Higher National Diploma (HND) programmes and the institute’s certificate programmes.' },
+      { type: 'paragraph', text: 'Certificate offerings include General Welding and Commercial Diving.' },
+      {
+        type: 'note',
+        label: 'Applying',
+        text: 'Applications are processed through the official Petroleum Training Institute website. Prospective students should confirm entry requirements, closing dates and fees there before applying.',
+      },
+    ],
+    author: authors.board,
+    category: byCategorySlug('announcements'),
+    tags: [
+      { name: 'Admissions', slug: 'admissions' },
+      { name: 'Announcements', slug: 'announcements' },
+    ],
+    isFeatured: false,
+    publishedAt: '2026-08-03T09:00:00.000Z',
+    readingMinutes: 2,
+    views: 1980,
+  },
   {
     id: 'art-src-suspends-sug-president',
     title:
@@ -194,7 +251,7 @@ export const articles: Article[] = [
     ],
     author: authors.maryam,
     category: byCategorySlug('innovation'),
-    departmentSlug: 'petroleum-engineering',
+    departmentSlug: inDepartment('petroleum-engineering-geosciences'),
     featuredImage: '/images/pti_innovation_hub.jpg',
     tags: [
       { name: 'Innovation', slug: 'innovation' },
@@ -224,7 +281,7 @@ export const articles: Article[] = [
     ],
     author: authors.maryam,
     category: byCategorySlug('technology'),
-    departmentSlug: 'electrical-electronic-engineering',
+    departmentSlug: inDepartment('electrical-electronic-engineering'),
     featuredImage: '/images/pti_students_lab.jpg',
     tags: [
       { name: 'Technology', slug: 'technology' },
@@ -248,7 +305,7 @@ export const articles: Article[] = [
     ],
     author: authors.john,
     category: byCategorySlug('research'),
-    departmentSlug: 'chemical-engineering',
+    departmentSlug: inDepartment('petroleum-natural-gas-processing'),
     tags: [
       { name: 'Research', slug: 'research' },
       { name: 'Industry', slug: 'industry' },
@@ -315,7 +372,7 @@ export const articles: Article[] = [
     ],
     author: authors.john,
     category: byCategorySlug('technology'),
-    departmentSlug: 'welding-offshore-technology',
+    departmentSlug: inDepartment('welding-engineering-offshore-technology'),
     tags: [
       { name: 'Facilities', slug: 'facilities' },
       { name: 'Technology', slug: 'technology' },
@@ -370,41 +427,47 @@ export const articles: Article[] = [
 
 export const events: CampusEvent[] = [
   {
+    id: 'evt-ogtan-expo',
+    title: 'OGTAN Human Capital Development Conference & Expo 2026',
+    slug: 'ogtan-conference-expo-2026',
+    description:
+      'The Oil and Gas Trainers Association of Nigeria brings its human capital development conference and exhibition to PTI Effurun across three days.',
+    location: 'Petroleum Training Institute, Effurun',
+    startsAt: '2026-08-25T00:00:00.000Z',
+    endsAt: '2026-08-27T23:59:59.000Z',
+    allDay: true,
+  },
+  {
+    id: 'evt-delta-central-meetings',
+    title: 'Delta Central and APC Leadership Meetings',
+    slug: 'delta-central-apc-meetings',
+    description:
+      'The PTI Conference Centre hosted Delta Central political and APC leadership meetings.',
+    location: 'PTI Conference Centre',
+    // Reported only as "late July 2026"; exact day still to be confirmed.
+    startsAt: '2026-07-28T00:00:00.000Z',
+    allDay: true,
+  },
+  {
     id: 'evt-matriculation',
     title: '2026 Matriculation Ceremony',
     slug: 'matriculation',
-    description: 'The formal admission ceremony for the incoming cohort of full-time and SICE students.',
+    description:
+      'The formal admission ceremony for the incoming cohort of full-time and SICE students.',
     location: 'PTI Conference Centre',
-    // Held July 2026 — see the matriculation report in News. Now a past
-    // event, so it no longer appears in the upcoming list.
-    startsAt: '2026-07-24T09:00:00.000Z',
-    endsAt: '2026-07-24T12:00:00.000Z',
+    // Held July 2026 — see the matriculation report in News.
+    startsAt: '2026-07-24T00:00:00.000Z',
+    allDay: true,
   },
   {
-    id: 'evt-tech-exhibition',
-    title: 'Annual Technology Exhibition',
-    slug: 'tech-exhibition',
-    description: 'Student and departmental project stands open to the public, alongside talks from visiting industry engineers.',
-    location: 'Main Campus Pavilion',
-    startsAt: '2026-11-12T08:00:00.000Z',
-    endsAt: '2026-11-12T15:00:00.000Z',
-  },
-  {
-    id: 'evt-career-fair',
-    title: 'Energy Sector Career Fair',
-    slug: 'career-fair',
-    description: 'Recruiters from across the energy sector meet final-year students and recent graduates.',
-    location: 'Institute Sports Complex',
-    startsAt: '2026-11-28T08:30:00.000Z',
-    endsAt: '2026-11-28T14:00:00.000Z',
-  },
-  {
-    id: 'evt-research-seminar',
-    title: 'Faculty Research Seminar Series',
-    slug: 'research-seminar',
-    description: 'Monthly seminar in which departments present ongoing research to staff and postgraduate students.',
-    location: 'Innovation Hub Auditorium',
-    startsAt: '2026-12-05T13:00:00.000Z',
-    endsAt: '2026-12-05T16:00:00.000Z',
+    id: 'evt-stse',
+    title: 'Students Technical Symposium and Exhibition (STSE)',
+    slug: 'students-technical-symposium',
+    description:
+      'The annual student technical symposium and exhibition, hosted on the main campus.',
+    location: 'Petroleum Training Institute, Effurun',
+    // Reported only as "March 2026"; exact day still to be confirmed.
+    startsAt: '2026-03-18T00:00:00.000Z',
+    allDay: true,
   },
 ];

@@ -36,6 +36,25 @@ export function formatTimeRange(startIso: string, endIso?: string): string {
   return endIso ? `${start} – ${TIME.format(new Date(endIso))}` : start;
 }
 
+/**
+ * e.g. "25–27 August 2026", collapsing to a single date when the event does
+ * not span more than one day.
+ */
+export function formatDateRange(startIso: string, endIso?: string): string {
+  const start = new Date(startIso);
+  if (!endIso) return DATE.format(start);
+
+  const end = new Date(endIso);
+  if (DATE.format(start) === DATE.format(end)) return DATE.format(start);
+
+  const sameMonth =
+    start.getUTCMonth() === end.getUTCMonth() && start.getUTCFullYear() === end.getUTCFullYear();
+
+  return sameMonth
+    ? `${DAY.format(start)}–${DATE.format(end)}`
+    : `${DATE.format(start)} – ${DATE.format(end)}`;
+}
+
 /** The stacked date block on event cards. */
 export function formatDateBlock(iso: string): { month: string; day: string } {
   const date = new Date(iso);

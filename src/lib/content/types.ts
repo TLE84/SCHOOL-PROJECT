@@ -28,7 +28,13 @@ export interface Department {
   id: string;
   name: string;
   slug: string;
-  description: string;
+  /** Institute shorthand, e.g. "CSIT". Shown alongside the full name. */
+  abbreviation?: string;
+  /**
+   * Optional: no prose has been supplied for these departments yet, and
+   * inventing it would put made-up claims on real academic units.
+   */
+  description?: string;
 }
 
 export interface Tag {
@@ -78,7 +84,20 @@ export interface CampusEvent {
   location: string;
   /** ISO 8601. */
   startsAt: string;
+  /** ISO 8601. For multi-day events this is the closing day. */
   endsAt?: string;
+  /**
+   * No published start/end time. The card shows the date (or date range)
+   * instead of hours, rather than inventing a schedule.
+   */
+  allDay?: boolean;
+}
+
+/** Short certificate programmes offered alongside the academic departments. */
+export interface CertificateCourse {
+  id: string;
+  name: string;
+  slug: string;
 }
 
 export interface Paginated<T> {

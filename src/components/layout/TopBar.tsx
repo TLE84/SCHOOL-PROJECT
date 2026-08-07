@@ -5,7 +5,7 @@ export function TopBar() {
   return (
     <div className="bg-green-900 text-white text-sm py-2 px-4 justify-between items-center hidden md:flex">
       <div>
-        <span className="text-gold font-semibold">📢 Admission for 2026/2027 Academic Session is now open.</span>
+        <span className="text-gold font-semibold">📢 Applications open for the 2026/2027 session — HND and certificate programmes.</span>
         <Link href="#" className="text-gold underline ml-2 hover:text-white transition-colors">Apply Now →</Link>
       </div>
       <div className="flex gap-4 text-xs font-medium tracking-wide">
