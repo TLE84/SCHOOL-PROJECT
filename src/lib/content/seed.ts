@@ -56,6 +56,7 @@ export const departments: Department[] = [
   { id: 'dept-esmt', name: 'Environmental Science and Management Technology', abbreviation: 'ESMT', slug: 'environmental-science-management-technology' },
   { id: 'dept-iset', name: 'Industrial Safety and Environmental Technology', abbreviation: 'ISET', slug: 'industrial-safety-environmental-technology' },
   { id: 'dept-peg', name: 'Petroleum Engineering and Geosciences', abbreviation: 'PEG', slug: 'petroleum-engineering-geosciences' },
+  { id: 'dept-met', name: 'Mechatronics Engineering Technology', abbreviation: 'MET', slug: 'mechatronics-engineering-technology' },
 ];
 
 /** Short certificate programmes offered alongside the departments. */
