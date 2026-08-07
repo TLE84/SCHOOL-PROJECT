@@ -198,7 +198,7 @@ export default async function ArticlePage({ params }: Params) {
                 <h2 id="author-heading" className="font-sans font-bold text-xl mb-6 text-slate-900 border-l-4 border-green-700 pl-3">
                   About the Author
                 </h2>
-                <div className="flex items-center gap-5 mb-6">
+                <div className="flex items-center gap-5">
                   <span
                     aria-hidden="true"
                     className="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center font-bold text-slate-400 text-xl shadow-inner shrink-0"
@@ -207,12 +207,18 @@ export default async function ArticlePage({ params }: Params) {
                   </span>
                   <div>
                     <h3 className="font-bold text-slate-900 text-lg">{article.author.name}</h3>
-                    <p className="text-sm text-slate-500 font-medium tracking-wide uppercase mt-1">
-                      {article.author.role}
-                    </p>
+                    {article.author.role && (
+                      <p className="text-sm text-slate-500 font-medium tracking-wide uppercase mt-1">
+                        {article.author.role}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <p className="text-base text-slate-600 leading-relaxed font-serif">{article.author.bio}</p>
+                {article.author.bio && (
+                  <p className="mt-6 text-base text-slate-600 leading-relaxed font-serif">
+                    {article.author.bio}
+                  </p>
+                )}
               </section>
 
               {related.length > 0 && (

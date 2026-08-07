@@ -10,9 +10,10 @@
 export interface Author {
   id: string;
   name: string;
-  /** Job title, e.g. "Campus Correspondent". */
-  role: string;
-  bio: string;
+  /** Job title, e.g. "Campus Correspondent". Omitted until supplied. */
+  role?: string;
+  /** Omitted until supplied — the author widget renders without it. */
+  bio?: string;
   /** Rendered in the avatar circle until real images exist. */
   initials: string;
 }

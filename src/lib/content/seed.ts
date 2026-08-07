@@ -10,57 +10,12 @@ import type { Article, Author, CampusEvent, Category, CertificateCourse, Departm
  */
 
 export const authors: Record<string, Author> = {
-  maryam: {
-    id: 'author-maryam',
-    name: 'Maryam Abubakar',
-    role: 'Campus Correspondent',
-    bio: 'Maryam covers technology, innovation, and academic development stories across the institute.',
-    initials: 'MA',
-  },
-  // An institutional desk rather than a named individual: PTI is led by a
-  // Principal and Chief Executive, and official notices are not personal
-  // bylines. The post holder is named in reporting, not as an author.
-  principal: {
-    id: 'author-principal',
-    name: 'Office of the Principal and Chief Executive',
-    role: 'Institute Leadership',
-    bio: 'Official announcements and addresses from the Office of the Principal and Chief Executive.',
-    initials: 'PC',
-  },
-  john: {
-    id: 'author-john',
-    name: 'John Doe',
-    role: 'Research Desk',
-    bio: 'John reports on research partnerships and industry collaboration.',
-    initials: 'JD',
-  },
-  jane: {
-    id: 'author-jane',
-    name: 'Jane Smith',
-    role: 'Academics Desk',
-    bio: 'Jane follows curriculum, examinations and student affairs.',
-    initials: 'JS',
-  },
-  board: {
-    id: 'author-board',
-    name: 'Academic Board',
-    role: 'Institute Desk',
-    bio: 'Official communications from the Academic Board.',
-    initials: 'AB',
-  },
-  staff: {
-    id: 'author-staff',
-    name: 'Staff Reporter',
-    role: 'Newsdesk',
-    bio: 'Reporting from the PTI newsdesk.',
-    initials: 'SR',
-  },
-  alumni: {
-    id: 'author-alumni',
-    name: 'Alumni Desk',
-    role: 'Alumni Relations',
-    bio: 'News from the PTI Alumni Association.',
-    initials: 'AD',
+  // Role and bio are intentionally unset: neither has been supplied, and
+  // inventing them would attach made-up detail to a real person.
+  dorcas: {
+    id: 'author-dorcas',
+    name: 'Iyango Dorcas',
+    initials: 'ID',
   },
 };
 
@@ -140,7 +95,7 @@ export const articles: Article[] = [
         text: 'Applications are processed through the official Petroleum Training Institute website. Prospective students should confirm entry requirements, closing dates and fees there before applying.',
       },
     ],
-    author: authors.board,
+    author: authors.dorcas,
     category: byCategorySlug('announcements'),
     tags: [
       { name: 'Admissions', slug: 'admissions' },
@@ -189,7 +144,7 @@ export const articles: Article[] = [
         text: 'The allegations contained in this report are attributed to the Students’ Representative Council. The suspension itself does not, on its own, establish that the allegations are proven. A response from Comr. Kenneth Awhawbera or his representatives would provide the other side of the matter and should be included if obtained.',
       },
     ],
-    author: authors.staff,
+    author: authors.dorcas,
     category: byCategorySlug('student-affairs'),
     tags: [
       { name: 'Student Union', slug: 'student-union' },
@@ -216,7 +171,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'programmes', text: 'Full-Time and SICE Programmes' },
       { type: 'paragraph', text: 'The cohort spans both the institute’s full-time programmes and those delivered through the School of Industrial and Continuing Education.' },
     ],
-    author: authors.maryam,
+    author: authors.dorcas,
     category: byCategorySlug('academics'),
     // Placeholder photograph — replace with an image from the ceremony itself.
     featuredImage: '/images/pti_students_lab.jpg',
@@ -249,7 +204,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'future', text: 'Future Plans' },
       { type: 'paragraph', text: 'A second phase is planned to add a dedicated fabrication workshop and an incubation programme for graduating student ventures.' },
     ],
-    author: authors.maryam,
+    author: authors.dorcas,
     category: byCategorySlug('innovation'),
     departmentSlug: inDepartment('petroleum-engineering-geosciences'),
     featuredImage: '/images/pti_innovation_hub.jpg',
@@ -279,7 +234,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'next', text: 'What Comes Next' },
       { type: 'paragraph', text: 'The group will represent the institute at the regional finals later in the year, supported by the Innovation Hub.' },
     ],
-    author: authors.maryam,
+    author: authors.dorcas,
     category: byCategorySlug('technology'),
     departmentSlug: inDepartment('electrical-electronic-engineering'),
     featuredImage: '/images/pti_students_lab.jpg',
@@ -303,7 +258,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'scope', text: 'Scope of Work' },
       { type: 'paragraph', text: 'Staff and postgraduate students will work alongside industry engineers on projects running across the next three academic sessions.' },
     ],
-    author: authors.john,
+    author: authors.dorcas,
     category: byCategorySlug('research'),
     departmentSlug: inDepartment('petroleum-natural-gas-processing'),
     tags: [
@@ -326,7 +281,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'rollout', text: 'Rollout Timeline' },
       { type: 'paragraph', text: 'The revised syllabus takes effect from the coming academic session, with existing cohorts transitioning the following year.' },
     ],
-    author: authors.board,
+    author: authors.dorcas,
     category: byCategorySlug('academics'),
     tags: [
       { name: 'Academics', slug: 'academics' },
@@ -348,7 +303,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'apply', text: 'How to Apply' },
       { type: 'paragraph', text: 'Applications open through the student portal, with shortlisting handled by a joint alumni and student affairs committee.' },
     ],
-    author: authors.alumni,
+    author: authors.dorcas,
     category: byCategorySlug('alumni'),
     tags: [
       { name: 'Alumni', slug: 'alumni' },
@@ -370,7 +325,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'impact', text: 'Impact on Students' },
       { type: 'paragraph', text: 'Departmental staff expect the additional capacity to shorten practical rotations by several weeks each session.' },
     ],
-    author: authors.john,
+    author: authors.dorcas,
     category: byCategorySlug('technology'),
     departmentSlug: inDepartment('welding-engineering-offshore-technology'),
     tags: [
@@ -393,7 +348,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'participation', text: 'Taking Part' },
       { type: 'paragraph', text: 'Registration is handled by departmental sports representatives, and all enrolled students are eligible.' },
     ],
-    author: authors.jane,
+    author: authors.dorcas,
     category: byCategorySlug('sports'),
     tags: [
       { name: 'Sports', slug: 'sports' },
@@ -415,7 +370,7 @@ export const articles: Article[] = [
       { type: 'heading', id: 'after', text: 'After the Upgrade' },
       { type: 'paragraph', text: 'The upgrade introduces faster results lookup and a redesigned course registration flow.' },
     ],
-    author: authors.board,
+    author: authors.dorcas,
     category: byCategorySlug('announcements'),
     tags: [{ name: 'Announcements', slug: 'announcements' }],
     isFeatured: false,
