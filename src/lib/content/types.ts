@@ -44,7 +44,13 @@ export interface Tag {
 export type ContentBlock =
   | { type: 'heading'; id: string; text: string }
   | { type: 'paragraph'; text: string }
-  | { type: 'quote'; text: string; attribution: string };
+  | { type: 'quote'; text: string; attribution: string }
+  /**
+   * Editorial apparatus set apart from the reporting — an editor's note,
+   * correction, or right-of-reply statement. Rendered as a labelled callout
+   * so readers do not mistake it for the story itself.
+   */
+  | { type: 'note'; label: string; text: string };
 
 export interface Article {
   id: string;

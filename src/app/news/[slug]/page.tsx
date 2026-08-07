@@ -133,6 +133,19 @@ export default async function ArticlePage({ params }: Params) {
                     </h2>
                   );
                 }
+                if (block.type === 'note') {
+                  return (
+                    <aside
+                      key={index}
+                      className="not-prose my-12 rounded-xl border border-slate-200 border-l-4 border-l-slate-400 bg-slate-50 p-8 font-sans"
+                    >
+                      <p className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+                        {block.label}
+                      </p>
+                      <p className="text-base leading-relaxed text-slate-700">{block.text}</p>
+                    </aside>
+                  );
+                }
                 if (block.type === 'quote') {
                   return (
                     <blockquote

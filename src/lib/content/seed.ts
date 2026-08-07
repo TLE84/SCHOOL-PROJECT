@@ -48,6 +48,13 @@ export const authors: Record<string, Author> = {
     bio: 'Official communications from the Academic Board.',
     initials: 'AB',
   },
+  staff: {
+    id: 'author-staff',
+    name: 'Staff Reporter',
+    role: 'Newsdesk',
+    bio: 'Reporting from the PTI newsdesk.',
+    initials: 'SR',
+  },
   alumni: {
     id: 'author-alumni',
     name: 'Alumni Desk',
@@ -62,6 +69,7 @@ export const categories: Category[] = [
   { id: 'cat-technology', name: 'Technology', slug: 'technology', description: 'Student projects, competitions and technical achievement.' },
   { id: 'cat-research', name: 'Research', slug: 'research', description: 'Studies, partnerships and technical work led by PTI staff and students.' },
   { id: 'cat-academics', name: 'Academics', slug: 'academics', description: 'Curriculum, examinations, admissions and academic policy.' },
+  { id: 'cat-student-affairs', name: 'Student Affairs', slug: 'student-affairs', description: 'Student union governance, representation and campus life.' },
   { id: 'cat-alumni', name: 'Alumni', slug: 'alumni', description: 'News and initiatives from the PTI Alumni Association.' },
   { id: 'cat-sports', name: 'Sports', slug: 'sports', description: 'Fixtures, results and sporting life on campus.' },
   { id: 'cat-announcements', name: 'Announcements', slug: 'announcements', description: 'Official notices from the institute.' },
@@ -86,6 +94,57 @@ export const departments: Department[] = [
 ];
 
 export const articles: Article[] = [
+  {
+    id: 'art-src-suspends-sug-president',
+    title:
+      'PTI Students’ Representative Council Suspends SUG President Over Alleged Constitutional and Financial Breaches',
+    slug: 'src-suspends-sug-president',
+    excerpt:
+      'The Students’ Representative Council has suspended SUG President Comr. Kenneth Awhawbera until further notice, citing alleged breaches of the union constitution and its financial procedures.',
+    content: [
+      { type: 'paragraph', text: 'The Students’ Representative Council (SRC) of the Petroleum Training Institute (PTI), Effurun, has announced the suspension of the institution’s Students’ Union Government (SUG) President, Comr. Kenneth Awhawbera, from office until further notice.' },
+      { type: 'paragraph', text: 'The decision was contained in an official letter dated August 1, 2026, signed by the Speaker of the Students’ Representative Council, Rt. Hon. Aransiola Oluwatobiloba Kayode, and the Clerk of the House, Hon. Okonkwor Precious Somto.' },
+      { type: 'paragraph', text: 'According to the letter, the suspension followed what the SRC described as a number of alleged breaches in the discharge of the SUG President’s official responsibilities.' },
+
+      { type: 'heading', id: 'allegations', text: 'Allegations Behind the Suspension' },
+      { type: 'paragraph', text: 'The SRC cited several issues as the basis for its decision, including an alleged bypassing of other executive members in the performance of official duties and alleged mismanagement of union funds.' },
+      { type: 'paragraph', text: 'The Council also accused the suspended president of signing official correspondence without the endorsement of the Secretary-General, which it said was contrary to provisions of the SUG Constitution.' },
+      { type: 'paragraph', text: 'Another allegation concerned the signing of union cheques without the required signatories, specifically the Treasurer and Secretary-General, as stipulated by the SUG Constitution and established financial procedures.' },
+      { type: 'paragraph', text: 'The SRC stated that these actions warranted the suspension while the matter remains under consideration.' },
+
+      { type: 'heading', id: 'restrictions', text: 'Suspension Restricts Official Duties' },
+      { type: 'paragraph', text: 'Following the suspension, the SRC said Comr. Kenneth Awhawbera is not authorised to perform duties or act in the capacity of SUG President until further notice.' },
+      { type: 'paragraph', text: 'The letter specifically stated that he is prohibited from representing the Union, issuing directives, signing official documents, or carrying out other activities in his capacity as SUG President during the period of suspension.' },
+      { type: 'paragraph', text: 'The development effectively places the day-to-day authority of the SUG presidency under scrutiny as the student leadership structure moves to address the allegations.' },
+
+      { type: 'heading', id: 'governance', text: 'Questions Over SUG Governance and Financial Procedures' },
+      { type: 'paragraph', text: 'The suspension has brought renewed attention to the importance of adherence to the PTI SUG Constitution, particularly regarding financial approvals, executive responsibilities and the procedures for official correspondence.' },
+      { type: 'paragraph', text: 'The SRC’s letter emphasised that its actions were based on what it described as established facts and constitutional provisions.' },
+      { type: 'paragraph', text: 'However, the document does not state the duration of the suspension or provide details of any disciplinary hearing or further investigative process. It remains unclear from the letter what specific steps will follow or whether the suspended president will be given an opportunity to respond formally to the allegations.' },
+
+      { type: 'heading', id: 'next', text: 'What Happens Next?' },
+      { type: 'paragraph', text: 'The suspension is expected to generate further discussions among students and stakeholders within the Petroleum Training Institute, particularly regarding the constitutional process for handling allegations against elected SUG officials.' },
+      { type: 'paragraph', text: 'As of the date of the letter, the SRC has maintained that the suspension remains in effect until further notice.' },
+
+      {
+        type: 'note',
+        label: 'Editor’s Note',
+        text: 'The allegations contained in this report are attributed to the Students’ Representative Council. The suspension itself does not, on its own, establish that the allegations are proven. A response from Comr. Kenneth Awhawbera or his representatives would provide the other side of the matter and should be included if obtained.',
+      },
+    ],
+    author: authors.staff,
+    category: byCategorySlug('student-affairs'),
+    tags: [
+      { name: 'Student Union', slug: 'student-union' },
+      { name: 'SUG', slug: 'sug' },
+      { name: 'Governance', slug: 'governance' },
+      { name: 'Students', slug: 'students' },
+    ],
+    isFeatured: false,
+    publishedAt: '2026-08-01T09:00:00.000Z',
+    readingMinutes: 4,
+    views: 3140,
+  },
   {
     id: 'art-matriculation-2026',
     title: 'PTI Matriculates 2,101 New Students Across Full-Time and SICE Programmes',
