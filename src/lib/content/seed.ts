@@ -17,12 +17,15 @@ export const authors: Record<string, Author> = {
     bio: 'Maryam covers technology, innovation, and academic development stories across the institute.',
     initials: 'MA',
   },
-  ahmed: {
-    id: 'author-ahmed',
-    name: 'Dr. Ahmed Salisu',
-    role: 'Office of the Rector',
-    bio: 'Announcements and addresses from the Office of the Rector.',
-    initials: 'AS',
+  // An institutional desk rather than a named individual: PTI is led by a
+  // Principal and Chief Executive, and official notices are not personal
+  // bylines. The post holder is named in reporting, not as an author.
+  principal: {
+    id: 'author-principal',
+    name: 'Office of the Principal and Chief Executive',
+    role: 'Institute Leadership',
+    bio: 'Official announcements and addresses from the Office of the Principal and Chief Executive.',
+    initials: 'PC',
   },
   john: {
     id: 'author-john',
@@ -123,7 +126,6 @@ export const articles: Article[] = [
       { type: 'paragraph', text: 'The Petroleum Training Institute (PTI) has officially launched its state-of-the-art Innovation Hub, a landmark initiative aimed at fostering creativity, research, and entrepreneurship among students and staff.' },
       { type: 'heading', id: 'facilities', text: 'Facilities and Resources' },
       { type: 'paragraph', text: 'The hub, located at the Main Campus, is equipped with modern laboratories, co-working spaces, high-performance computing systems, and advanced prototyping tools.' },
-      { type: 'quote', text: 'This hub represents our commitment to building a culture of innovation and preparing our students to solve real-world challenges.', attribution: 'Dr. Ahmed Salisu, Rector, PTI' },
       { type: 'heading', id: 'benefits', text: 'Benefits to Students' },
       { type: 'paragraph', text: 'Students across every department will be able to book bench space, borrow equipment and join structured mentorship cohorts running through each semester.' },
       { type: 'heading', id: 'collaboration', text: 'Industry Collaboration' },
@@ -196,28 +198,6 @@ export const articles: Article[] = [
     publishedAt: '2026-05-08T09:00:00.000Z',
     readingMinutes: 4,
     views: 640,
-  },
-  {
-    id: 'art-rector-charge',
-    title: 'Rector Charges Students on Creativity and Excellence',
-    slug: 'rector-charges-students',
-    excerpt: 'During the matriculation ceremony, the Rector emphasized the importance of a creative mindset.',
-    content: [
-      { type: 'heading', id: 'address', text: 'The Address' },
-      { type: 'paragraph', text: 'Addressing the incoming cohort, the Rector urged students to treat problem-solving as a daily habit rather than an examination exercise.' },
-      { type: 'heading', id: 'support', text: 'Support for New Students' },
-      { type: 'paragraph', text: 'The Office of the Rector confirmed expanded academic advising and a peer mentoring scheme for first-year students.' },
-    ],
-    author: authors.jane,
-    category: byCategorySlug('academics'),
-    tags: [
-      { name: 'Academics', slug: 'academics' },
-      { name: 'Students', slug: 'students' },
-    ],
-    isFeatured: false,
-    publishedAt: '2026-05-05T09:00:00.000Z',
-    readingMinutes: 3,
-    views: 520,
   },
   {
     id: 'art-curriculum',
