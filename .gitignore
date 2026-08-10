@@ -45,6 +45,7 @@ AGENTS.md
 node_modules
 CLAUDE.md
 .next/
+PROJECT_CONTEXT.md
 
 # Playwright
 /test-results/

@@ -1,79 +1,134 @@
-# PTI News
+# PTI News — Campus Digital News & Events Platform
 
-Digital information hub for the Petroleum Training Institute, Effurun — news,
-departments and events.
+Official digital information hub for the **Petroleum Training Institute (PTI), Effurun** — providing comprehensive coverage of campus news, academic department activities, institutional events, and professional certificate programs.
 
-Built with Next.js 16 (App Router), React 19 and Tailwind CSS v4.
+Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Drizzle ORM**, and **Supabase SSR**.
 
-## Getting started
+---
+
+## Quick Start (Zero Config)
+
+Get the project running locally in 2 simple commands. No database setup or `.env` file is required out of the box — the content layer uses a built-in seed dataset.
 
 ```bash
+# 1. Install dependencies
 npm install
+
+# 2. Launch development server
 npm run dev
 ```
 
-Open <http://localhost:3000>. No environment variables are needed: the content
-layer is seed-backed, so the site builds and runs with nothing configured.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Scripts
+---
 
-| Script | What it does |
-| --- | --- |
-| `npm run dev` | Development server |
-| `npm run build` | Production build |
-| `npm start` | Serve the production build |
-| `npm run lint` | ESLint (`next lint` was removed in Next 16) |
-| `npm run typecheck` | `tsc --noEmit` |
+## 🌟 Key Features
 
-## Where things live
+- **Dynamic Campus News**: Categorized articles (Academics, Research, Sports, Campus Life) with pagination and search/filter support.
+- **Breaking News Ticker**: Instant visual alerts for time-sensitive announcements.
+- **Departmental Directory**: Profiles for PTI academic departments and specialized training units.
+- **Campus Events Calendar**: Live tracking of upcoming workshops, seminars, matriculations, and past archives.
+- **Certificate Courses Showcase**: Specialized petroleum industry short courses and training modules.
+- **Decoupled Architecture**: Abstracted data access layer allows zero-config local prototyping while being fully ready for PostgreSQL deployment.
+- **Responsive & Accessible UI**: Custom navigation, mobile drawer menu, dark mode styling elements, and share utilities.
 
-```
-src/
-  app/                     routes (App Router)
-    news/[slug]            article pages
-    category/[slug]        category listings
-    departments/[slug]     department pages
-    events/[slug]          event pages
-  components/
-    layout/                top bar, navbar, mobile menu, footer
-    ui/                    cards, pills, pagination, share links
-  lib/
-    content/               the read API — see below
-    format.ts              date/time formatting (locale and TZ pinned)
-    site.ts                canonical origin resolution
-  db/schema.ts             Drizzle schema (not yet wired to any page)
-```
+---
 
-### The content layer
+## 🏗️ Architecture Overview
 
-Pages never touch a database. They call async functions in
-`src/lib/content/queries.ts`, which return view models defined in `types.ts`
-and currently read from `seed.ts`.
+```mermaid
+graph TD
+    Client["Browser / Client"] --> NextApp["Next.js 16 App Router (React Server Components)"]
+    
+    subgraph Presentation ["Presentation Layer"]
+        NextApp --> Pages["Routes (News, Categories, Departments, Events)"]
+        Pages --> LayoutComp["Layout (Navbar, TopBar, MobileNav, Footer)"]
+        Pages --> UIComp["UI (ArticleCard, EventCard, ShareLinks, Pagination)"]
+    end
+    
+    subgraph ContentLayer ["Content Abstraction Layer"]
+        Pages --> QueryAPI["Read API (src/lib/content/queries.ts)"]
+        QueryAPI --> SeedData["Seed Dataset (src/lib/content/seed.ts)"]
+        QueryAPI -. "Future DB Wiring" .-> DrizzleORM["Drizzle ORM (src/db/schema.ts)"]
+    end
 
-```ts
-const { items, totalPages } = await getArticles({ page, categorySlug })
-const article = await getArticleBySlug(slug)
+    subgraph DataLayer ["Data & Auth Services"]
+        DrizzleORM -.-> Postgres[("PostgreSQL / Supabase")]
+        Pages -.-> SupabaseAuth["Supabase Auth (src/utils/supabase/*)"]
+    end
 ```
 
-Moving to Postgres means rewriting the bodies of `queries.ts` against
-`src/db/schema.ts`. No page or component changes.
+For full deep-dive architectural specifications, data contracts, and entity relationship diagrams, see [PROJECT_CONTEXT.md](file:///c:/Users/HP/Desktop/projects/campus-website-news/PROJECT_CONTEXT.md).
 
-> **Note:** some seed content is placeholder copy carried over from the
-> original static markup. It is marked as such at the top of `seed.ts` and
-> should be replaced with real reporting before launch.
+---
 
-## Deploying to Vercel
+## 📁 Directory Layout
 
-1. Import the repository at [vercel.com/new](https://vercel.com/new). Framework
-   detection, build command and output directory are all automatic.
-2. Deploy. No environment variables are required for the first deploy.
-3. Once a custom domain is live, set `NEXT_PUBLIC_SITE_URL` to it (for example
-   `https://news.pti.edu.ng`) in **Settings → Environment Variables**, then
-   redeploy.
+```
+campus-website-news/
+├── PROJECT_CONTEXT.md      # Full architecture & domain documentation
+├── README.md               # Quick start & repository summary
+├── package.json            # Scripts and dependencies
+├── playwright.config.ts    # End-to-end testing config
+├── src/
+│   ├── app/                # App Router pages and routes
+│   │   ├── category/[slug] # Category listing pages
+│   │   ├── departments/    # Department portal pages
+│   │   ├── events/         # Event detail & archive pages
+│   │   ├── news/[slug]     # News article detail pages
+│   │   └── page.tsx        # Homepage layout
+│   ├── components/         # Reusable UI & Layout components
+│   │   ├── layout/         # Header, TopBar, Footer, MobileNav
+│   │   └── ui/             # ArticleCard, EventCard, Pill, ShareLinks
+│   ├── db/                 # Drizzle ORM schema & Postgres client
+│   │   ├── index.ts        # Database client setup
+│   │   └── schema.ts       # Database table definitions
+│   ├── lib/                # Business logic & content layer
+│   │   ├── content/        # Query functions, interfaces, seed data
+│   │   ├── format.ts       # Timezone & date formatting
+│   │   └── site.ts         # Canonical site URL resolver
+│   └── utils/              # Supabase SSR & browser helpers
+└── tests/                  # Playwright E2E tests
+```
 
-`NEXT_PUBLIC_SITE_URL` backs `metadataBase` and the absolute URLs in share
-links. Until it is set, `src/lib/site.ts` falls back to the Vercel-provided
-deployment domain, so Open Graph previews and share buttons still resolve
-correctly — they just use the `*.vercel.app` host.
+---
 
-See `.env.example` for the full list of variables and what still needs wiring.
+## 🚦 Available Scripts
+
+| Command | Action |
+| :--- | :--- |
+| `npm run dev` | Starts the local development server at `localhost:3000` |
+| `npm run build` | Builds optimized production bundle |
+| `npm start` | Launches production server build |
+| `npm run lint` | Runs ESLint validation across the repository |
+| `npm run typecheck` | Executes TypeScript type checking (`tsc --noEmit`) |
+| `npx playwright test` | Runs end-to-end browser tests |
+
+---
+
+## ⚙️ Environment Variables
+
+Creating `.env.local` is optional for initial setup. When deploying to Vercel or connecting to live PostgreSQL/Supabase instances, configure these variables:
+
+| Variable | Required? | Purpose |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_SITE_URL` | Optional | Canonical site origin for OpenGraph images and social sharing. Defaults to Vercel domain if unconfigured. |
+| `DATABASE_URL` | Optional | PostgreSQL connection string for Drizzle ORM queries (`src/db/schema.ts`). |
+| `NEXT_PUBLIC_SUPABASE_URL` | Optional | Supabase project endpoint URL. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional | Supabase anonymous API key for browser/server helpers. |
+
+---
+
+## 🚢 Deployment (Vercel)
+
+1. Push your code to GitHub.
+2. Import the project on [Vercel](https://vercel.com/new).
+3. Framework settings (Next.js), build command (`npm run build`), and output directory are automatically detected.
+4. (Optional) Set `NEXT_PUBLIC_SITE_URL` in **Project Settings → Environment Variables** once a custom domain is assigned (e.g. `https://news.pti.edu.ng`).
+
+---
+
+## 📄 Documentation
+
+For full implementation details, database ER diagrams, data flow diagrams, entity models, and migration guides, refer to:
+👉 **[PROJECT_CONTEXT.md](file:///c:/Users/HP/Desktop/projects/campus-website-news/PROJECT_CONTEXT.md)**
