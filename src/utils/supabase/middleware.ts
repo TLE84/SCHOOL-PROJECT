@@ -54,7 +54,20 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const isAuthRoute = request.nextUrl.pathname === '/admin/login'
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
+
+  // If trying to access admin routes (except login) without a user, redirect to login
+  if (isAdminRoute && !isAuthRoute && !user) {
+    return NextResponse.redirect(new URL('/admin/login', request.url))
+  }
+
+  // If trying to access login while already authenticated, redirect to admin dashboard
+  if (isAuthRoute && user) {
+    return NextResponse.redirect(new URL('/admin', request.url))
+  }
 
   return supabaseResponse
 }
