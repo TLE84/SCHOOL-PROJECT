@@ -71,6 +71,7 @@ export interface Article {
   featuredImage?: string;
   tags: Tag[];
   isFeatured: boolean;
+  isPublished: boolean;
   /** ISO 8601. Formatted at render time via `formatDate`. */
   publishedAt: string;
   readingMinutes: number;

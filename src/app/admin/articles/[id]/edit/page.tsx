@@ -1,14 +1,15 @@
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
 import { updateArticle } from '../../actions'
-import { getArticleBySlug } from '@/lib/content/queries'
+import { getArticleBySlug, getCategories, getUsers } from '@/lib/content/queries'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EditArticlePage({ params }: { params: { id: string } }) {
-  // In a full DB implementation, we would query by ID: await db.select().from(articles).where(eq(articles.id, params.id))
-  // For now, since seed.ts has articles without standard UUID IDs or the UI passes the slug, we'll try to find it.
-  // We're using ID in the URL, but the mock API doesn't have getArticleById. We'll pretend the ID is the slug for the mock to work.
   const article = await getArticleBySlug(params.id)
+  const categories = await getCategories()
+  const users = await getUsers()
   
   if (!article) {
     // Return a fallback form for DB test mode since the seed might not have it by ID
@@ -68,10 +69,44 @@ export default async function EditArticlePage({ params }: { params: { id: string
               id="content" 
               name="content" 
               required 
-              defaultValue={article.content}
+              defaultValue={article.content.map((c: any) => c.text || '').join('\n\n')}
               rows={15}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 outline-none resize-y font-mono text-sm"
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label htmlFor="categoryId" className="text-sm font-medium text-slate-700">Category</label>
+              <select 
+                id="categoryId" 
+                name="categoryId" 
+                defaultValue={article.category.id}
+                required 
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 outline-none bg-white"
+              >
+                <option value="">Select a category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="authorId" className="text-sm font-medium text-slate-700">Author</label>
+              <select 
+                id="authorId" 
+                name="authorId" 
+                defaultValue={article.author.id}
+                required 
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 outline-none bg-white"
+              >
+                <option value="">Select an author</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">

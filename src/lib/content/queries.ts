@@ -1,31 +1,43 @@
-import * as seed from './seed';
-import type { Article, CampusEvent, Category, CertificateCourse, Department, Paginated } from './types';
-
-/**
- * The site's read API.
- *
- * Every function is async and returns plain view models, so replacing these
- * bodies with Drizzle queries against `src/db/schema.ts` is a change confined
- * to this file — no page or component needs to be touched.
- */
+import { getDb } from '@/db';
+import { eq, desc, and, not, count } from 'drizzle-orm';
+import * as schema from '@/db/schema';
+import type { Article, CampusEvent, Category, CertificateCourse, Department, Paginated, ContentBlock } from './types';
 
 export const ARTICLES_PER_PAGE = 6;
 
-const newestFirst = (a: Article, b: Article) =>
-  Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
-
-function paginate<T>(items: T[], page: number, perPage: number): Paginated<T> {
-  const total = items.length;
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const current = Math.min(Math.max(1, page), totalPages);
-  const start = (current - 1) * perPage;
-
+function mapArticle(row: any): Article {
   return {
-    items: items.slice(start, start + perPage),
-    page: current,
-    perPage,
-    total,
-    totalPages,
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    excerpt: row.excerpt ?? '',
+    content: (row.content as ContentBlock[]) ?? [],
+    author: {
+      id: row.author.id,
+      name: row.author.name,
+      role: row.author.jobTitle ?? undefined,
+      bio: row.author.bio ?? undefined,
+      initials: row.author.name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2),
+    },
+    category: {
+      id: row.category.id,
+      name: row.category.name,
+      slug: row.category.slug,
+      description: row.category.description ?? '',
+    },
+    departmentSlug: row.department?.slug,
+    featuredImage: row.featuredImage ?? undefined,
+    tags: row.tags?.map((t: any) => ({ name: t.tag.name, slug: t.tag.slug })) ?? [],
+    isFeatured: row.isFeatured,
+    isPublished: row.isPublished,
+    publishedAt: row.publishedAt?.toISOString() ?? new Date().toISOString(),
+    readingMinutes: row.readingMinutes,
+    views: row.views,
   };
 }
 
@@ -34,7 +46,6 @@ export interface ArticleQuery {
   perPage?: number;
   categorySlug?: string;
   departmentSlug?: string;
-  /** Omit a slug from the results, e.g. the article already on screen. */
   excludeSlug?: string;
 }
 
@@ -45,95 +56,310 @@ export async function getArticles({
   departmentSlug,
   excludeSlug,
 }: ArticleQuery = {}): Promise<Paginated<Article>> {
-  const filtered = seed.articles
-    .filter((article) => (categorySlug ? article.category.slug === categorySlug : true))
-    .filter((article) => (departmentSlug ? article.departmentSlug === departmentSlug : true))
-    .filter((article) => (excludeSlug ? article.slug !== excludeSlug : true))
-    .sort(newestFirst);
+  const db = getDb();
+  const offset = (page - 1) * perPage;
+  
+  // Build where conditions
+  const conditions = [];
+  conditions.push(eq(schema.articles.isPublished, true));
+  
+  if (categorySlug) {
+    const category = await getCategoryBySlug(categorySlug);
+    if (category) conditions.push(eq(schema.articles.categoryId, category.id));
+  }
+  
+  if (departmentSlug) {
+    const department = await getDepartmentBySlug(departmentSlug);
+    if (department) conditions.push(eq(schema.articles.departmentId, department.id));
+  }
+  
+  if (excludeSlug) {
+    conditions.push(not(eq(schema.articles.slug, excludeSlug)));
+  }
+  
+  const whereClause = and(...conditions);
 
-  return paginate(filtered, page, perPage);
+  // Get total count
+  const [{ value: total }] = await db
+    .select({ value: count() })
+    .from(schema.articles)
+    .where(whereClause);
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+  const rows = await db.query.articles.findMany({
+    where: whereClause,
+    orderBy: [desc(schema.articles.publishedAt)],
+    limit: perPage,
+    offset,
+    with: {
+      author: true,
+      category: true,
+      department: true,
+      tags: {
+        with: {
+          tag: true
+        }
+      }
+    }
+  });
+
+  return {
+    items: rows.map(mapArticle),
+    page,
+    perPage,
+    total,
+    totalPages,
+  };
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  return seed.articles.find((article) => article.slug === slug) ?? null;
+  const db = getDb();
+  const row = await db.query.articles.findFirst({
+    where: and(eq(schema.articles.slug, slug), eq(schema.articles.isPublished, true)),
+    with: {
+      author: true,
+      category: true,
+      department: true,
+      tags: {
+        with: {
+          tag: true
+        }
+      }
+    }
+  });
+
+  if (!row) return null;
+  return mapArticle(row);
 }
 
 export async function getAllArticleSlugs(): Promise<string[]> {
-  return seed.articles.map((article) => article.slug);
+  const db = getDb();
+  const rows = await db.select({ slug: schema.articles.slug }).from(schema.articles).where(eq(schema.articles.isPublished, true));
+  return rows.map((r) => r.slug);
 }
 
 export async function getFeaturedArticle(): Promise<Article | null> {
-  const featured = seed.articles.filter((article) => article.isFeatured).sort(newestFirst);
-  return featured[0] ?? seed.articles.slice().sort(newestFirst)[0] ?? null;
+  const db = getDb();
+  const row = await db.query.articles.findFirst({
+    where: and(eq(schema.articles.isFeatured, true), eq(schema.articles.isPublished, true)),
+    orderBy: [desc(schema.articles.publishedAt)],
+    with: {
+      author: true,
+      category: true,
+      department: true,
+      tags: { with: { tag: true } }
+    }
+  });
+
+  if (row) return mapArticle(row);
+
+  // Fallback to most recent if no featured
+  const fallback = await db.query.articles.findFirst({
+    where: eq(schema.articles.isPublished, true),
+    orderBy: [desc(schema.articles.publishedAt)],
+    with: {
+      author: true,
+      category: true,
+      department: true,
+      tags: { with: { tag: true } }
+    }
+  });
+
+  return fallback ? mapArticle(fallback) : null;
 }
 
-/** Most-viewed articles, excluding whichever one is running as the lead. */
 export async function getTrendingArticles(limit = 2, excludeSlug?: string): Promise<Article[]> {
-  return seed.articles
-    .filter((article) => (excludeSlug ? article.slug !== excludeSlug : true))
-    .slice()
-    .sort((a, b) => b.views - a.views)
-    .slice(0, limit);
+  const db = getDb();
+  const conditions = [eq(schema.articles.isPublished, true)];
+  if (excludeSlug) conditions.push(not(eq(schema.articles.slug, excludeSlug)));
+
+  const rows = await db.query.articles.findMany({
+    where: and(...conditions),
+    orderBy: [desc(schema.articles.views), desc(schema.articles.publishedAt)],
+    limit,
+    with: {
+      author: true,
+      category: true,
+      department: true,
+      tags: { with: { tag: true } }
+    }
+  });
+
+  return rows.map(mapArticle);
 }
 
-/** Same category first, then most recent, never the article itself. */
 export async function getRelatedArticles(article: Article, limit = 3): Promise<Article[]> {
-  const others = seed.articles.filter((candidate) => candidate.slug !== article.slug);
-  const sameCategory = others.filter((c) => c.category.slug === article.category.slug);
-  const rest = others.filter((c) => c.category.slug !== article.category.slug);
+  const db = getDb();
+  
+  // Try same category first
+  const sameCategoryRows = await db.query.articles.findMany({
+    where: and(
+      eq(schema.articles.isPublished, true),
+      not(eq(schema.articles.slug, article.slug)),
+      eq(schema.articles.categoryId, article.category.id)
+    ),
+    orderBy: [desc(schema.articles.publishedAt)],
+    limit,
+    with: { author: true, category: true, department: true, tags: { with: { tag: true } } }
+  });
 
-  return [...sameCategory.sort(newestFirst), ...rest.sort(newestFirst)].slice(0, limit);
+  if (sameCategoryRows.length >= limit) {
+    return sameCategoryRows.map(mapArticle);
+  }
+
+  const excludeSlugs = [article.slug, ...sameCategoryRows.map(r => r.slug)];
+  
+  const restConditions = [eq(schema.articles.isPublished, true)];
+  for (const slug of excludeSlugs) {
+    restConditions.push(not(eq(schema.articles.slug, slug)));
+  }
+
+  const otherRows = await db.query.articles.findMany({
+    where: and(...restConditions),
+    orderBy: [desc(schema.articles.publishedAt)],
+    limit: limit - sameCategoryRows.length,
+    with: { author: true, category: true, department: true, tags: { with: { tag: true } } }
+  });
+
+  return [...sameCategoryRows, ...otherRows].map(mapArticle);
 }
 
 export async function getCategories(): Promise<Category[]> {
-  return seed.categories;
+  const db = getDb();
+  const rows = await db.select().from(schema.categories);
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    description: r.description ?? ''
+  }));
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  return seed.categories.find((category) => category.slug === slug) ?? null;
+  const db = getDb();
+  const [row] = await db.select().from(schema.categories).where(eq(schema.categories.slug, slug)).limit(1);
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? ''
+  };
 }
 
 export async function getDepartments(): Promise<Department[]> {
-  return seed.departments;
+  const db = getDb();
+  const rows = await db.select().from(schema.departments);
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    abbreviation: r.abbreviation ?? undefined,
+    description: r.description ?? undefined
+  }));
 }
 
 export async function getDepartmentBySlug(slug: string): Promise<Department | null> {
-  return seed.departments.find((department) => department.slug === slug) ?? null;
+  const db = getDb();
+  const [row] = await db.select().from(schema.departments).where(eq(schema.departments.slug, slug)).limit(1);
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    abbreviation: row.abbreviation ?? undefined,
+    description: row.description ?? undefined
+  };
 }
 
-/**
- * Events that have not finished yet, soonest first.
- *
- * `now` is injectable so pages and tests can pin it rather than depending on
- * the wall clock. If every seed event has passed, the full list is returned so
- * the homepage section never renders empty.
- */
+export async function getUsers() {
+  const db = getDb();
+  return await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users);
+}
+
 export async function getUpcomingEvents(limit?: number, now = new Date()): Promise<CampusEvent[]> {
-  const upcoming = seed.events
-    .filter((event) => Date.parse(event.endsAt ?? event.startsAt) >= now.getTime())
-    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+  const db = getDb();
+  const rows = await db.query.events.findMany({
+    where: eq(schema.events.isPublished, true), // Filtering properly requires raw SQL for Date > now if we don't have good operators, but we can fetch and filter for simplicity or use Drizzle operators.
+    // For simplicity with Drizzle and timezones, we fetch recent/upcoming and filter in JS. 
+  });
+  
+  const upcoming = rows
+    .filter(e => new Date(e.endsAt ?? e.startsAt).getTime() >= now.getTime())
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+    
+  const list = upcoming.length > 0 ? upcoming : rows.sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+  
+  const mapped = list.map(e => ({
+    id: e.id,
+    title: e.title,
+    slug: e.slug,
+    description: e.description ?? '',
+    location: e.location ?? '',
+    startsAt: e.startsAt.toISOString(),
+    endsAt: e.endsAt?.toISOString(),
+    allDay: e.allDay
+  }));
 
-  const list = upcoming.length > 0 ? upcoming : seed.events.slice().sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
-  return typeof limit === 'number' ? list.slice(0, limit) : list;
+  return typeof limit === 'number' ? mapped.slice(0, limit) : mapped;
 }
 
-/** Events that have already finished, most recent first. */
 export async function getPastEvents(limit?: number, now = new Date()): Promise<CampusEvent[]> {
-  const past = seed.events
-    .filter((event) => Date.parse(event.endsAt ?? event.startsAt) < now.getTime())
-    .sort((a, b) => Date.parse(b.startsAt) - Date.parse(a.startsAt));
+  const db = getDb();
+  const rows = await db.query.events.findMany({
+    where: eq(schema.events.isPublished, true)
+  });
+  
+  const past = rows
+    .filter(e => new Date(e.endsAt ?? e.startsAt).getTime() < now.getTime())
+    .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+    
+  const mapped = past.map(e => ({
+    id: e.id,
+    title: e.title,
+    slug: e.slug,
+    description: e.description ?? '',
+    location: e.location ?? '',
+    startsAt: e.startsAt.toISOString(),
+    endsAt: e.endsAt?.toISOString(),
+    allDay: e.allDay
+  }));
 
-  return typeof limit === 'number' ? past.slice(0, limit) : past;
+  return typeof limit === 'number' ? mapped.slice(0, limit) : mapped;
 }
 
 export async function getCertificateCourses(): Promise<CertificateCourse[]> {
-  return seed.certificateCourses;
+  const db = getDb();
+  const rows = await db.select().from(schema.certificateCourses);
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug
+  }));
 }
 
 export async function getEventBySlug(slug: string): Promise<CampusEvent | null> {
-  return seed.events.find((event) => event.slug === slug) ?? null;
+  const db = getDb();
+  const row = await db.query.events.findFirst({
+    where: and(eq(schema.events.slug, slug), eq(schema.events.isPublished, true))
+  });
+  
+  if (!row) return null;
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    description: row.description ?? '',
+    location: row.location ?? '',
+    startsAt: row.startsAt.toISOString(),
+    endsAt: row.endsAt?.toISOString(),
+    allDay: row.allDay
+  };
 }
 
 export async function getAllEventSlugs(): Promise<string[]> {
-  return seed.events.map((event) => event.slug);
+  const db = getDb();
+  const rows = await db.select({ slug: schema.events.slug }).from(schema.events).where(eq(schema.events.isPublished, true));
+  return rows.map(r => r.slug);
 }

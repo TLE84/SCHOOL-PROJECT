@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, uuid, varchar, boolean, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, varchar, boolean, primaryKey, integer, jsonb } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 export const roles = pgTable('roles', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -13,6 +14,8 @@ export const users = pgTable('user', {
   emailVerified: boolean('emailVerified').notNull(),
   image: text('image'),
   roleId: uuid('role_id').references(() => roles.id),
+  jobTitle: varchar('job_title', { length: 100 }), // Added for UI
+  bio: text('bio'), // Added for UI
   createdAt: timestamp('createdAt').notNull(),
   updatedAt: timestamp('updatedAt').notNull()
 });
@@ -49,6 +52,7 @@ export const departments = pgTable('departments', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   slug: varchar('slug', { length: 255 }).notNull().unique(),
+  abbreviation: varchar('abbreviation', { length: 20 }), // Added
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -76,23 +80,32 @@ export const events = pgTable('events', {
   location: varchar('location', { length: 255 }),
   startsAt: timestamp('starts_at').notNull(),
   endsAt: timestamp('ends_at'),
+  allDay: boolean('all_day').default(false).notNull(), // Added
   isPublished: boolean('is_published').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const certificateCourses = pgTable('certificate_courses', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
 });
 
 export const articles = pgTable('articles', {
   id: uuid('id').defaultRandom().primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
   slug: varchar('slug', { length: 255 }).notNull().unique(),
-  content: text('content').notNull(),
+  content: jsonb('content').notNull(), // Changed from text to jsonb
   excerpt: text('excerpt'),
   authorId: text('author_id').references(() => users.id).notNull(),
-  categoryId: uuid('category_id').references(() => categories.id),
+  categoryId: uuid('category_id').references(() => categories.id).notNull(),
   departmentId: uuid('department_id').references(() => departments.id),
   featuredImage: text('featured_image'),
   isPublished: boolean('is_published').default(false).notNull(),
   isFeatured: boolean('is_featured').default(false).notNull(),
+  views: integer('views').default(0).notNull(), // Added
+  readingMinutes: integer('reading_minutes').default(1).notNull(), // Added
   publishedAt: timestamp('published_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -122,3 +135,61 @@ export const comments = pgTable('comments', {
   isApproved: boolean('is_approved').default(true).notNull(), // Auto approve by default, or change based on policy
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// --- Relations ---
+
+export const usersRelations = relations(users, ({ many }) => ({
+  articles: many(articles),
+  comments: many(comments),
+}));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  articles: many(articles),
+}));
+
+export const departmentsRelations = relations(departments, ({ many }) => ({
+  articles: many(articles),
+}));
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  articleTags: many(articleTags),
+}));
+
+export const articlesRelations = relations(articles, ({ one, many }) => ({
+  author: one(users, {
+    fields: [articles.authorId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [articles.categoryId],
+    references: [categories.id],
+  }),
+  department: one(departments, {
+    fields: [articles.departmentId],
+    references: [departments.id],
+  }),
+  tags: many(articleTags),
+  comments: many(comments),
+}));
+
+export const articleTagsRelations = relations(articleTags, ({ one }) => ({
+  article: one(articles, {
+    fields: [articleTags.articleId],
+    references: [articles.id],
+  }),
+  tag: one(tags, {
+    fields: [articleTags.tagId],
+    references: [tags.id],
+  }),
+}));
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+  article: one(articles, {
+    fields: [comments.articleId],
+    references: [articles.id],
+  }),
+  author: one(users, {
+    fields: [comments.authorId],
+    references: [users.id],
+  }),
+}));
