@@ -1,25 +1,18 @@
 import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
 import { updateArticle } from '../../actions'
-import { getArticleBySlug, getCategories, getUsers } from '@/lib/content/queries'
+import { getArticleById, getCategories, getUsers } from '@/lib/content/queries'
 import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
 export default async function EditArticlePage({ params }: { params: { id: string } }) {
-  const article = await getArticleBySlug(params.id)
+  const article = await getArticleById(params.id)
   const categories = await getCategories()
   const users = await getUsers()
   
   if (!article) {
-    // Return a fallback form for DB test mode since the seed might not have it by ID
-    return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg">
-          Article not found in seed dataset. If using DB, ensure DB is connected.
-        </div>
-      </div>
-    )
+    notFound()
   }
 
   return (

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { LayoutDashboard, FileText, Settings, Users, LogOut } from 'lucide-react'
+import { signout } from './actions'
 
 export default function AdminLayout({
   children,
@@ -36,7 +37,7 @@ export default function AdminLayout({
         </nav>
         
         <div className="p-4 border-t border-slate-800">
-          <form action="/auth/signout" method="post">
+          <form action={signout}>
             <button className="flex items-center gap-3 px-3 py-2 w-full rounded-lg hover:bg-slate-800 hover:text-red-400 transition-colors text-left">
               <LogOut className="w-5 h-5" />
               Sign Out

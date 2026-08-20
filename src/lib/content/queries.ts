@@ -133,6 +133,30 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   return mapArticle(row);
 }
 
+/**
+ * Admin-only: fetch an article by its UUID, regardless of publish status.
+ * Used by the admin edit page where the URL contains the article ID.
+ */
+export async function getArticleById(id: string): Promise<Article | null> {
+  const db = getDb();
+  const row = await db.query.articles.findFirst({
+    where: eq(schema.articles.id, id),
+    with: {
+      author: true,
+      category: true,
+      department: true,
+      tags: {
+        with: {
+          tag: true
+        }
+      }
+    }
+  });
+
+  if (!row) return null;
+  return mapArticle(row);
+}
+
 export async function getAllArticleSlugs(): Promise<string[]> {
   const db = getDb();
   const rows = await db.select({ slug: schema.articles.slug }).from(schema.articles).where(eq(schema.articles.isPublished, true));
@@ -276,6 +300,28 @@ export async function getDepartmentBySlug(slug: string): Promise<Department | nu
 export async function getUsers() {
   const db = getDb();
   return await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users);
+}
+
+/**
+ * Dashboard statistics for the admin overview page.
+ */
+export async function getAdminStats() {
+  const db = getDb();
+
+  const [totalArticles] = await db.select({ value: count() }).from(schema.articles);
+  const [totalUsers] = await db.select({ value: count() }).from(schema.users);
+
+  // Articles published this month
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const allArticles = await db.select({ publishedAt: schema.articles.publishedAt }).from(schema.articles).where(eq(schema.articles.isPublished, true));
+  const publishedThisMonth = allArticles.filter(a => a.publishedAt && new Date(a.publishedAt) >= startOfMonth).length;
+
+  return {
+    totalArticles: totalArticles.value,
+    publishedThisMonth,
+    totalAuthors: totalUsers.value,
+  };
 }
 
 export async function getUpcomingEvents(limit?: number, now = new Date()): Promise<CampusEvent[]> {
