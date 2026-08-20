@@ -7,6 +7,12 @@ import { BreakingNews } from "@/components/layout/BreakingNews";
 import { Footer } from "@/components/layout/Footer";
 import { siteUrl } from "@/lib/site";
 
+// The Footer queries the database for categories. Since it lives in the root
+// layout every page inherits a DB dependency, which causes build-time static
+// generation to fail when the DB isn't reachable from the build environment.
+// Forcing dynamic rendering means pages are generated on each request instead.
+export const dynamic = 'force-dynamic';
+
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
 
