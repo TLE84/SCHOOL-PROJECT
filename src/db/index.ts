@@ -23,7 +23,7 @@ export function getDb() {
         'DATABASE_URL is not set. Add it to the environment before using the database.',
       );
     }
-    client = postgres(connectionString);
+    client = postgres(connectionString, { prepare: false });
   }
 
   return drizzle(client, { schema });
