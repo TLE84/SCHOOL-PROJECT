@@ -5,15 +5,10 @@ import Link from 'next/link';
 import { ChevronRight, Mail, CheckCircle, Link as LinkIcon } from 'lucide-react';
 import { Pill } from '@/components/ui/Pill';
 import { ShareLinks } from '@/components/ui/ShareLinks';
-import { getAllArticleSlugs, getArticleBySlug, getRelatedArticles } from '@/lib/content/queries';
+import { getArticleBySlug, getRelatedArticles } from '@/lib/content/queries';
 import { formatDate } from '@/lib/format';
 
 type Params = { params: Promise<{ slug: string }> };
-
-export async function generateStaticParams() {
-  const slugs = await getAllArticleSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;

@@ -2,14 +2,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ArticleCard } from '@/components/ui/ArticleCard';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getArticles, getDepartmentBySlug, getDepartments } from '@/lib/content/queries';
+import { getArticles, getDepartmentBySlug } from '@/lib/content/queries';
 
 type Params = { params: Promise<{ slug: string }> };
-
-export async function generateStaticParams() {
-  const departments = await getDepartments();
-  return departments.map((department) => ({ slug: department.slug }));
-}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;

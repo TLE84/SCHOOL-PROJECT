@@ -3,15 +3,10 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getAllEventSlugs, getEventBySlug, getUpcomingEvents } from '@/lib/content/queries';
+import { getEventBySlug, getUpcomingEvents } from '@/lib/content/queries';
 import { formatDate, formatDateRange, formatTimeRange } from '@/lib/format';
 
 type Params = { params: Promise<{ slug: string }> };
-
-export async function generateStaticParams() {
-  const slugs = await getAllEventSlugs();
-  return slugs.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;

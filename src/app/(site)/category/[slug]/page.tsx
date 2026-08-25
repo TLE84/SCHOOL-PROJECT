@@ -3,17 +3,12 @@ import { notFound } from 'next/navigation';
 import { ArticleCard } from '@/components/ui/ArticleCard';
 import { Pagination } from '@/components/ui/Pagination';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { getArticles, getCategories, getCategoryBySlug } from '@/lib/content/queries';
+import { getArticles, getCategoryBySlug } from '@/lib/content/queries';
 
 type Params = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string }>;
 };
-
-export async function generateStaticParams() {
-  const categories = await getCategories();
-  return categories.map((category) => ({ slug: category.slug }));
-}
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
