@@ -4,11 +4,20 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from "next/image";
 import { usePathname } from 'next/navigation';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { audienceLinks, navLinks } from './nav-links';
+import { signOut } from '@/lib/auth/actions';
+import { homePathForRole } from '@/lib/auth/session';
+import type { UserRole } from '@/lib/auth/demo-users';
 
-export function MobileNav() {
+interface MobileNavUser {
+  name: string;
+  role: UserRole;
+  roleLabel: string;
+}
+
+export function MobileNav({ user }: { user?: MobileNavUser | null }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -163,20 +172,42 @@ export function MobileNav() {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-5 font-sans">
-          <Link
-            href="#"
-            className="flex flex-1 items-center justify-center rounded-md bg-green-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-800"
-          >
-            Subscribe
-          </Link>
-          <Link
-            href="#"
-            aria-label="Account"
-            className="rounded-full border border-slate-200 p-2.5 text-slate-600 transition-colors hover:text-green-700"
-          >
-            <User size={20} />
-          </Link>
+        <div className="border-t border-slate-200 px-6 py-5 font-sans">
+          {user ? (
+            <div className="flex flex-col gap-3">
+              <Link
+                href={homePathForRole(user.role)}
+                className="flex items-center justify-center rounded-md bg-green-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-800"
+              >
+                {user.role === 'admin' ? 'Admin dashboard' : 'My portal'}
+              </Link>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500">
+                  Signed in as <span className="font-semibold text-slate-700">{user.name}</span> · {user.roleLabel}
+                </span>
+                <form action={signOut}>
+                  <button className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 transition-colors hover:text-red-600">
+                    <LogOut size={16} /> Sign out
+                  </button>
+                </form>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login"
+                className="flex flex-1 items-center justify-center rounded-md border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-green-600 hover:text-green-700"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/signup"
+                className="flex flex-1 items-center justify-center rounded-md bg-green-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-800"
+              >
+                Sign up
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </>

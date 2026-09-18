@@ -1,10 +1,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, User } from 'lucide-react';
+import { Search, LogOut } from 'lucide-react';
 import { MobileNav } from './MobileNav';
 import { navLinks } from './nav-links';
+import { getSessionUser } from '@/lib/auth/server';
+import { signOut } from '@/lib/auth/actions';
+import { homePathForRole, type SessionUser } from '@/lib/auth/session';
+import { roleLabels } from '@/lib/auth/demo-users';
 
-export function Navbar() {
+export async function Navbar() {
+  const user = await getSessionUser();
+
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
@@ -23,19 +29,63 @@ export function Navbar() {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-4 sm:gap-5">
+        <div className="flex items-center gap-3 sm:gap-4 font-sans">
           <button aria-label="Search" className="text-slate-600 hover:text-green-600 transition-colors">
             <Search size={20} />
           </button>
-          <button className="hidden sm:block bg-green-700 hover:bg-green-800 text-white px-5 py-2.5 rounded-md text-sm font-semibold transition-colors shadow-sm">
-            Subscribe
-          </button>
-          <button aria-label="Account" className="hidden lg:block text-slate-600 hover:text-green-600 border border-slate-200 rounded-full p-1.5 transition-colors">
-            <User size={20} />
-          </button>
-          <MobileNav />
+
+          {user ? (
+            <>
+              <Link
+                href={homePathForRole(user.role)}
+                className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200 py-1 pl-1 pr-3 transition-colors hover:border-green-600"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">
+                  {initials(user)}
+                </span>
+                <span className="text-sm font-semibold text-slate-700">{user.name.split(' ')[0]}</span>
+              </Link>
+              <form action={signOut}>
+                <button
+                  aria-label="Sign out"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-red-600"
+                >
+                  <LogOut size={18} />
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="hidden sm:inline-block text-sm font-semibold text-slate-700 transition-colors hover:text-green-700"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-md bg-green-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-800"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
+
+          <MobileNav
+            user={user ? { name: user.name, role: user.role, roleLabel: roleLabels[user.role] } : null}
+          />
         </div>
       </div>
     </header>
   );
+}
+
+function initials(user: SessionUser): string {
+  return user.name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }

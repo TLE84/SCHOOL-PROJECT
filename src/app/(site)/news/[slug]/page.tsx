@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { ChevronRight, Mail, CheckCircle, Link as LinkIcon, Pencil } from 'lucide-react';
 import { Pill } from '@/components/ui/Pill';
 import { ShareLinks } from '@/components/ui/ShareLinks';
+import { ArticleEngagement } from '@/components/ui/ArticleEngagement';
 import { getArticleBySlug, getRelatedArticles } from '@/lib/content/queries';
+import { getReactionSummary, getComments } from '@/lib/content/engagement';
 import { getSessionUser } from '@/lib/auth/server';
 import { formatDate } from '@/lib/format';
 
@@ -44,6 +46,8 @@ export default async function ArticlePage({ params }: Params) {
   const headings = article.content.filter((block) => block.type === 'heading');
   const sessionUser = await getSessionUser();
   const isAdmin = sessionUser?.role === 'admin';
+  const reactions = getReactionSummary(article.id, sessionUser?.id);
+  const comments = getComments(article.id);
 
   return (
     <div className="bg-white min-h-screen pb-24">
@@ -206,6 +210,14 @@ export default async function ArticlePage({ params }: Params) {
                 ))}
               </div>
             </div>
+
+            <ArticleEngagement
+              articleId={article.id}
+              slug={article.slug}
+              reactions={reactions}
+              comments={comments}
+              signedIn={Boolean(sessionUser)}
+            />
           </div>
 
           <div className="lg:col-span-4 font-sans">
