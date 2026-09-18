@@ -78,6 +78,33 @@ export function findDemoUserById(id: string): DemoUser | null {
   return demoUsers.find((user) => user.id === id) ?? null;
 }
 
+export function findDemoUserByEmail(email: string): DemoUser | null {
+  const normalized = email.trim().toLowerCase();
+  return demoUsers.find((user) => user.email.toLowerCase() === normalized) ?? null;
+}
+
+/**
+ * Register a new demo account from the sign-up form. New accounts default to
+ * the `student` role. Kept in memory only — it lives for the life of the
+ * running server, exactly like the seed-backed content store. Real, persisted
+ * registration arrives with the database-backed auth layer.
+ */
+export function registerDemoUser(input: {
+  name: string;
+  email: string;
+  password: string;
+}): DemoUser {
+  const user: DemoUser = {
+    id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: input.name.trim(),
+    email: input.email.trim(),
+    password: input.password,
+    role: 'student',
+  };
+  demoUsers.push(user);
+  return user;
+}
+
 export const roleLabels: Record<UserRole, string> = {
   admin: 'Administrator',
   lecturer: 'Lecturer',

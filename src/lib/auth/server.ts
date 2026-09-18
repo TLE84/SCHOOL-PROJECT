@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import type { DemoUser } from './demo-users';
-import { decodeSession, SESSION_COOKIE, type SessionUser } from './session';
+import { decodeSession, encodeSession, SESSION_COOKIE, type SessionUser } from './session';
 
 /**
  * Server-side session helpers (read/write the session cookie).
@@ -13,7 +13,15 @@ const SESSION_MAX_AGE = 60 * 60 * 8; // 8 hours
 
 export async function createSession(user: DemoUser): Promise<void> {
   const store = await cookies();
-  store.set(SESSION_COOKIE, user.id, {
+  const payload: SessionUser = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    jobTitle: user.jobTitle,
+    department: user.department,
+  };
+  store.set(SESSION_COOKIE, encodeSession(payload), {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',

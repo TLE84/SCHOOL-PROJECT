@@ -18,9 +18,10 @@ export function middleware(request: NextRequest) {
   const isAdminLogin = pathname === '/admin/login'
   const isPortalArea = pathname.startsWith('/portal')
   const isLogin = pathname === '/login'
+  const isSignup = pathname === '/signup'
 
-  // Already signed in and visiting a login page → send to their home.
-  if (user && (isLogin || isAdminLogin)) {
+  // Already signed in and visiting a login or sign-up page → send to their home.
+  if (user && (isLogin || isAdminLogin || isSignup)) {
     return NextResponse.redirect(new URL(homePathForRole(user.role), request.url))
   }
 

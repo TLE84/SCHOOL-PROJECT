@@ -1,15 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { SignInForm } from '@/components/auth/SignInForm'
-import { DemoCredentials } from '@/components/auth/DemoCredentials'
+import { SignUpForm } from '@/components/auth/SignUpForm'
 
 export const metadata: Metadata = {
-  title: 'Sign In',
-  description: 'Students and lecturers sign in to access PTI campus news.',
+  title: 'Create Account',
+  description: 'Create a PTI account to access campus news.',
 }
 
-export default async function LoginPage({
+export default async function SignUpPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>
@@ -30,28 +29,19 @@ export default async function LoginPage({
             />
           </Link>
           <h1 className="mt-6 font-sans text-2xl font-bold tracking-tight text-slate-900">
-            Student &amp; Lecturer Sign In
+            Create your account
           </h1>
           <p className="mt-2 text-slate-500">
-            Sign in with your PTI account to access campus news.
+            Sign up to access campus news, events and announcements.
           </p>
         </div>
 
-        <SignInForm origin="portal" error={Boolean(error)} />
+        <SignUpForm error={error} />
 
         <p className="mt-6 text-center text-sm text-slate-500">
-          New to PTI News?{' '}
-          <Link href="/signup" className="font-medium text-green-700 hover:underline">
-            Create an account
-          </Link>
-        </p>
-
-        <DemoCredentials roles={['student', 'lecturer']} />
-
-        <p className="mt-6 text-center text-sm text-slate-500">
-          Administrator?{' '}
-          <Link href="/admin/login" className="font-medium text-green-700 hover:underline">
-            Go to the admin portal
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-green-700 hover:underline">
+            Sign in
           </Link>
         </p>
         <p className="mt-2 text-center text-sm text-slate-400">
