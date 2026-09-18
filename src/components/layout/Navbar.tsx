@@ -30,9 +30,9 @@ export async function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-3 sm:gap-4 font-sans">
-          <button aria-label="Search" className="text-slate-600 hover:text-green-600 transition-colors">
+          <Link href="/search" aria-label="Search" className="text-slate-600 hover:text-green-600 transition-colors">
             <Search size={20} />
-          </button>
+          </Link>
 
           {user ? (
             <>

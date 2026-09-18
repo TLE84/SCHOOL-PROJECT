@@ -1,7 +1,12 @@
 export interface NavLink {
   name: string;
   href: string;
+  /** Opens in a new tab and is rendered as a plain external anchor. */
+  external?: boolean;
 }
+
+/** The official Petroleum Training Institute website. */
+export const PTI_SITE = 'https://www.pti.edu.ng';
 
 /** Primary site navigation, shared by the desktop navbar and the mobile menu. */
 export const navLinks: NavLink[] = [
@@ -22,6 +27,6 @@ export const navLinks: NavLink[] = [
 export const audienceLinks: NavLink[] = [
   { name: 'Students', href: '/login' },
   { name: 'Staff', href: '/login' },
-  { name: 'Alumni', href: '#' },
+  { name: 'Alumni', href: PTI_SITE, external: true },
   { name: 'Sign In', href: '/login' },
 ];

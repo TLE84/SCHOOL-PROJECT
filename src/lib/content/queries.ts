@@ -86,6 +86,30 @@ export async function getAllArticleSlugs(): Promise<string[]> {
     .map((article) => article.slug);
 }
 
+/**
+ * Full-text-ish search over published articles: matches the query against the
+ * title, excerpt, category name and tags (case-insensitive).
+ */
+export async function searchArticles(query: string): Promise<Article[]> {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+
+  return listArticles()
+    .filter((article) => {
+      if (!article.isPublished) return false;
+      const haystack = [
+        article.title,
+        article.excerpt,
+        article.category.name,
+        ...article.tags.map((tag) => tag.name),
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    })
+    .sort(byPublishedDesc);
+}
+
 export async function getFeaturedArticle(): Promise<Article | null> {
   const published = listArticles()
     .filter((article) => article.isPublished)

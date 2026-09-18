@@ -10,10 +10,18 @@ const exploreLinks = [
   { name: 'Events', href: '/events' },
 ];
 
+const PTI_SITE = 'https://www.pti.edu.ng';
+
 const socialLinks = [
-  { name: 'Facebook', href: '#' },
-  { name: 'X', href: '#' },
-  { name: 'LinkedIn', href: '#' },
+  { name: 'Facebook', href: PTI_SITE },
+  { name: 'X', href: PTI_SITE },
+  { name: 'LinkedIn', href: PTI_SITE },
+];
+
+const legalLinks = [
+  { name: 'Privacy Policy', href: '/privacy' },
+  { name: 'Terms of Use', href: '/terms' },
+  { name: 'Accessibility', href: '/accessibility' },
 ];
 
 export async function Footer() {
@@ -34,7 +42,12 @@ export async function Footer() {
           <ul className="flex gap-4 text-green-300">
             {socialLinks.map((social) => (
               <li key={social.name}>
-                <a href={social.href} className="hover:text-white transition-colors">
+                <a
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors"
+                >
                   {social.name}
                 </a>
               </li>
@@ -90,9 +103,11 @@ export async function Footer() {
       <div className="container mx-auto px-4 border-t border-green-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-green-300">
         <p>© {new Date().getFullYear()} Petroleum Training Institute. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0 font-medium">
-          <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-          <Link href="#" className="hover:text-white transition-colors">Terms of Use</Link>
-          <Link href="#" className="hover:text-white transition-colors">Accessibility</Link>
+          {legalLinks.map((link) => (
+            <Link key={link.name} href={link.href} className="hover:text-white transition-colors">
+              {link.name}
+            </Link>
+          ))}
         </div>
       </div>
     </footer>

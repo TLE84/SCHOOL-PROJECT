@@ -6,6 +6,7 @@ import { ChevronRight, Mail, CheckCircle, Link as LinkIcon, Pencil } from 'lucid
 import { Pill } from '@/components/ui/Pill';
 import { ShareLinks } from '@/components/ui/ShareLinks';
 import { ArticleEngagement } from '@/components/ui/ArticleEngagement';
+import { NewsletterForm } from '@/components/ui/NewsletterForm';
 import { getArticleBySlug, getRelatedArticles } from '@/lib/content/queries';
 import { getReactionSummary, getComments } from '@/lib/content/engagement';
 import { getSessionUser } from '@/lib/auth/server';
@@ -314,26 +315,7 @@ export default async function ArticlePage({ params }: Params) {
                 <p className="text-base text-green-100 mb-8 relative z-10 leading-relaxed font-serif">
                   Subscribe to our newsletter for the latest news and academic announcements from PTI.
                 </p>
-                <form className="relative z-10 flex flex-col gap-4">
-                  <label htmlFor="newsletter-email" className="sr-only">
-                    Email address
-                  </label>
-                  <input
-                    id="newsletter-email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="Enter your email"
-                    required
-                    className="w-full px-5 py-4 rounded-xl bg-white text-slate-900 text-base font-medium focus:outline-none focus:ring-4 focus:ring-green-500/50 transition-all shadow-inner"
-                  />
-                  <button
-                    type="submit"
-                    className="w-full bg-gold hover:bg-yellow-500 text-slate-900 font-black py-4 px-6 rounded-xl text-base uppercase tracking-wider transition-all shadow-md hover:-translate-y-1"
-                  >
-                    Subscribe
-                  </button>
-                </form>
+                <NewsletterForm />
                 <p className="text-xs font-medium text-green-400 mt-6 text-center opacity-80 uppercase tracking-widest">
                   No spam. Unsubscribe anytime.
                 </p>

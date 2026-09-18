@@ -161,12 +161,23 @@ export function MobileNav({ user }: { user?: MobileNavUser | null }) {
           <ul className="flex flex-wrap gap-2">
             {audienceLinks.map((link) => (
               <li key={link.name}>
-                <Link
-                  href={link.href}
-                  className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-green-50 hover:text-green-700"
-                >
-                  {link.name}
-                </Link>
+                {link.external ? (
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-green-50 hover:text-green-700"
+                  >
+                    {link.name}
+                  </a>
+                ) : (
+                  <Link
+                    href={link.href}
+                    className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-green-50 hover:text-green-700"
+                  >
+                    {link.name}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
