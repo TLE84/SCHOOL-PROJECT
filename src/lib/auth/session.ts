@@ -1,13 +1,19 @@
-import { findDemoUserById, type UserRole } from './demo-users';
+import { findDemoUserById } from './demo-users';
+import { isUserRole, type UserRole } from './roles';
 
 /**
- * Edge-safe session helpers.
+ * Session types plus the demo session cookie.
  *
- * This module is imported by both the middleware (edge runtime) and server
- * actions, so it must not import `next/headers`. Cookie reading/writing lives
- * in `server.ts`.
+ * `SessionUser` is what the rest of the app sees for a signed-in person,
+ * whichever auth backend produced it. This module is imported by the proxy as
+ * well as server code, so it must not import `next/headers`; cookie reading and
+ * writing lives in `server.ts`.
  *
- * The session cookie is self-contained: it holds the signed-in user's details
+ * The demo cookie below is only honoured when Supabase Auth is NOT configured.
+ * It is unsigned, so anyone could forge one — with Supabase on, it is ignored
+ * entirely and sessions come from Supabase's verified tokens instead.
+ *
+ * The demo session cookie is self-contained: it holds the signed-in user's details
  * encoded as base64url JSON. That matters because a newly registered user
  * (from the sign-up form) only exists in the Node server's memory and would not
  * be visible to the edge middleware — carrying the payload in the cookie means
@@ -27,8 +33,6 @@ export interface SessionUser {
   department?: string;
 }
 
-const ROLES: UserRole[] = ['admin', 'lecturer', 'student'];
-
 export function encodeSession(user: SessionUser): string {
   return toBase64Url(JSON.stringify(user));
 }
@@ -44,8 +48,7 @@ export function decodeSession(token: string | undefined | null): SessionUser | n
       typeof parsed.id === 'string' &&
       typeof parsed.name === 'string' &&
       typeof parsed.email === 'string' &&
-      typeof parsed.role === 'string' &&
-      ROLES.includes(parsed.role as UserRole)
+      isUserRole(parsed.role)
     ) {
       return parsed as SessionUser;
     }

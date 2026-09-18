@@ -1,13 +1,16 @@
 import Link from 'next/link'
 import { SignInForm } from '@/components/auth/SignInForm'
 import { DemoCredentials } from '@/components/auth/DemoCredentials'
+import { isSupabaseAuthEnabled } from '@/utils/supabase/config'
 
 export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; notice?: string }>
 }) {
-  const { error } = await searchParams
+  const { error, notice } = await searchParams
+  // Demo accounts (and the pre-filled demo admin email) only exist without Supabase.
+  const demoMode = !isSupabaseAuthEnabled()
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 px-4 py-12">
@@ -17,9 +20,14 @@ export default async function AdminLoginPage({
           <p className="text-slate-500 mt-2">Sign in to manage campus news and articles.</p>
         </div>
 
-        <SignInForm origin="admin" error={Boolean(error)} defaultEmail="admin@pti.edu.ng" />
+        <SignInForm
+          origin="admin"
+          error={error}
+          notice={notice}
+          defaultEmail={demoMode ? 'admin@pti.edu.ng' : undefined}
+        />
 
-        <DemoCredentials roles={['admin']} />
+        {demoMode && <DemoCredentials roles={['admin']} />}
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Student or lecturer?{' '}

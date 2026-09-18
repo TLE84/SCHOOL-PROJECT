@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { audienceLinks, navLinks } from './nav-links';
 import { signOut } from '@/lib/auth/actions';
 import { homePathForRole } from '@/lib/auth/session';
-import type { UserRole } from '@/lib/auth/demo-users';
+import type { UserRole } from '@/lib/auth/roles';
 
 interface MobileNavUser {
   name: string;

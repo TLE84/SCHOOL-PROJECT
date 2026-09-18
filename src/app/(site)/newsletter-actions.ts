@@ -19,7 +19,14 @@ export async function subscribeToNewsletter(
     return { status: 'error', message: 'Please enter a valid email address.' }
   }
 
-  const { alreadySubscribed } = subscribeEmail(email)
+  let alreadySubscribed: boolean
+  try {
+    ;({ alreadySubscribed } = await subscribeEmail(email))
+  } catch (error) {
+    console.error('[newsletter] Subscription failed', error)
+    return { status: 'error', message: 'We couldn’t save your subscription just now. Please try again shortly.' }
+  }
+
   return {
     status: 'success',
     message: alreadySubscribed

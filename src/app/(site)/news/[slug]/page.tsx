@@ -43,12 +43,14 @@ export default async function ArticlePage({ params }: Params) {
   // under /news returned 200. Unknown slugs are now a genuine 404.
   if (!article) notFound();
 
-  const related = await getRelatedArticles(article, 3);
   const headings = article.content.filter((block) => block.type === 'heading');
   const sessionUser = await getSessionUser();
   const isAdmin = sessionUser?.role === 'admin';
-  const reactions = getReactionSummary(article.id, sessionUser?.id);
-  const comments = getComments(article.id);
+  const [related, reactions, comments] = await Promise.all([
+    getRelatedArticles(article, 3),
+    getReactionSummary(article.id, sessionUser?.id),
+    getComments(article.id),
+  ]);
 
   return (
     <div className="bg-white min-h-screen pb-24">

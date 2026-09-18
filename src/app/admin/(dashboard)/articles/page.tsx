@@ -1,13 +1,12 @@
 import Link from 'next/link'
 import { Edit, Trash2, Plus } from 'lucide-react'
-// If database is configured, we could fetch from db. For now, fetch from queries to show current articles
 import { getArticles } from '@/lib/content/queries'
 import { formatDate } from '@/lib/format'
 import { deleteArticle } from './actions'
 
 export default async function AdminArticlesPage() {
-  // Fetching all articles from the current read API (which uses seed.ts initially)
-  const articles = await getArticles({ perPage: 100 })
+  // Drafts included — this is the only place an unpublished article is listed.
+  const articles = await getArticles({ perPage: 100, includeDrafts: true })
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">

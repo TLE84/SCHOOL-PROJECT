@@ -6,6 +6,9 @@ const errorMessages: Record<string, string> = {
   password: 'Your password must be at least 6 characters.',
   role: 'Please choose whether you are a student or a lecturer.',
   exists: 'An account with that email already exists. Try signing in instead.',
+  rate: 'Too many sign-up emails have been sent recently. Please try again in a little while.',
+  disabled: 'New sign-ups are currently closed.',
+  undeliverable: 'We couldn’t send a confirmation email to that address. Please try again later or contact the site team.',
 }
 
 const roleOptions = [

@@ -1,123 +1,145 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { inArray } from 'drizzle-orm';
+import { getDb } from './index';
 import * as schema from './schema';
 import * as seedData from '../lib/content/seed';
-import 'dotenv/config';
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
+/**
+ * Load the hardcoded seed content (src/lib/content/seed.ts) into the database.
+ *
+ * Idempotent: every insert is keyed on a natural unique column (slug or email)
+ * and skips rows that already exist, so re-running never duplicates content
+ * and never overwrites anything edited since. Run with `npm run db:seed` after
+ * `npm run db:migrate`.
+ */
+
+if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is not set in .env.local');
 }
 
-const client = postgres(connectionString, { ssl: 'require' });
-const db = drizzle(client, { schema });
+const db = getDb();
+
+/** Insert rows keyed by slug (skipping existing ones) and return slug → id. */
+async function upsertBySlug<T extends { slug: string }>(
+  table: typeof schema.categories | typeof schema.departments | typeof schema.tags | typeof schema.certificateCourses,
+  rows: T[],
+): Promise<Map<string, string>> {
+  if (rows.length > 0) {
+    await db.insert(table).values(rows as never).onConflictDoNothing({ target: table.slug });
+  }
+  const existing = await db
+    .select({ id: table.id, slug: table.slug })
+    .from(table)
+    .where(inArray(table.slug, rows.map((row) => row.slug)));
+  return new Map(existing.map((row) => [row.slug, row.id]));
+}
 
 async function seed() {
   console.log('Seeding database...');
 
-  // Map to hold old-id -> new-uuid
-  const idMap = new Map<string, string>();
-
-  // 1. Roles & Users
-  console.log('Inserting users...');
-  const adminRoleId = crypto.randomUUID();
-  await db.insert(schema.roles).values({
-    id: adminRoleId,
-    name: 'administrator',
-  }).onConflictDoNothing();
-
-  for (const key of Object.keys(seedData.authors)) {
-    const author = seedData.authors[key];
-    const email = `${author.id}@pti.edu.ng`;
-    
-    let existingUser = await db.query.users.findFirst({ where: (users, { eq }) => eq(users.email, email) });
-    if (!existingUser) {
-      const newId = crypto.randomUUID();
-      await db.insert(schema.users).values({
-        id: newId,
+  // 1. Byline authors. These are profiles only — no sign-in account, no role —
+  //    so the `.invalid` address (reserved, never deliverable) can never clash
+  //    with a real person signing up.
+  const authors = Object.values(seedData.authors);
+  await db
+    .insert(schema.users)
+    .values(
+      authors.map((author) => ({
+        id: author.id,
         name: author.name,
-        email: email,
-        emailVerified: true,
-        roleId: adminRoleId,
+        email: `${author.id}@bylines.invalid`,
+        emailVerified: false,
         jobTitle: author.role,
         bio: author.bio,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      existingUser = { id: newId } as any;
-    }
-    idMap.set(author.id, existingUser!.id);
+      })),
+    )
+    .onConflictDoNothing();
+  console.log(`  authors: ${authors.length}`);
+
+  // 2. Taxonomy.
+  const categoryIds = await upsertBySlug(
+    schema.categories,
+    seedData.categories.map(({ name, slug, description }) => ({ name, slug, description })),
+  );
+  const departmentIds = await upsertBySlug(
+    schema.departments,
+    seedData.departments.map(({ name, slug, abbreviation, description }) => ({
+      name,
+      slug,
+      abbreviation,
+      description,
+    })),
+  );
+  await upsertBySlug(
+    schema.certificateCourses,
+    seedData.certificateCourses.map(({ name, slug }) => ({ name, slug })),
+  );
+  const allTags = [
+    ...new Map(seedData.articles.flatMap((a) => a.tags).map((tag) => [tag.slug, tag])).values(),
+  ];
+  const tagIds = await upsertBySlug(schema.tags, allTags);
+  console.log(
+    `  categories: ${categoryIds.size}, departments: ${departmentIds.size}, tags: ${tagIds.size}, certificate courses: ${seedData.certificateCourses.length}`,
+  );
+
+  // 3. Articles, then their tags.
+  for (const article of seedData.articles) {
+    const categoryId = categoryIds.get(article.category.slug);
+    if (!categoryId) throw new Error(`No category for ${article.slug}`);
+
+    await db
+      .insert(schema.articles)
+      .values({
+        title: article.title,
+        slug: article.slug,
+        content: article.content,
+        excerpt: article.excerpt,
+        authorId: article.author.id,
+        categoryId,
+        departmentId: article.departmentSlug ? departmentIds.get(article.departmentSlug) : null,
+        featuredImage: article.featuredImage,
+        isPublished: article.isPublished,
+        isFeatured: article.isFeatured,
+        views: article.views,
+        readingMinutes: article.readingMinutes,
+        publishedAt: new Date(article.publishedAt),
+      })
+      .onConflictDoNothing({ target: schema.articles.slug });
   }
 
-  // 2. Categories
-  console.log('Inserting categories...');
-  for (const cat of seedData.categories) {
-    let existingCat = await db.query.categories.findFirst({ where: (categories, { eq }) => eq(categories.slug, cat.slug) });
-    if (!existingCat) {
-      const newId = crypto.randomUUID();
-      await db.insert(schema.categories).values({
-        id: newId,
-        name: cat.name,
-        slug: cat.slug,
-        description: cat.description,
-      });
-      existingCat = { id: newId } as any;
-    }
-    idMap.set(cat.id, existingCat!.id);
+  const articleRows = await db
+    .select({ id: schema.articles.id, slug: schema.articles.slug })
+    .from(schema.articles)
+    .where(inArray(schema.articles.slug, seedData.articles.map((a) => a.slug)));
+  const articleIds = new Map(articleRows.map((row) => [row.slug, row.id]));
+
+  const articleTagRows = seedData.articles.flatMap((article) =>
+    article.tags.map((tag) => ({
+      articleId: articleIds.get(article.slug)!,
+      tagId: tagIds.get(tag.slug)!,
+    })),
+  );
+  if (articleTagRows.length > 0) {
+    await db.insert(schema.articleTags).values(articleTagRows).onConflictDoNothing();
   }
+  console.log(`  articles: ${articleIds.size}`);
 
-  // 3. Departments
-  console.log('Inserting departments...');
-  for (const dept of seedData.departments) {
-    let existingDept = await db.query.departments.findFirst({ where: (departments, { eq }) => eq(departments.slug, dept.slug) });
-    if (!existingDept) {
-      const newId = crypto.randomUUID();
-      await db.insert(schema.departments).values({
-        id: newId,
-        name: dept.name,
-        slug: dept.slug,
-        abbreviation: dept.abbreviation,
-        description: dept.description,
-      });
-      existingDept = { id: newId } as any;
-    }
-    idMap.set(dept.id, existingDept!.id);
-  }
-
-  // 4. Articles
-  console.log('Inserting articles (skipping tags to keep seed simple)...');
-  for (const art of seedData.articles) {
-    const departmentId = art.departmentSlug 
-      ? seedData.departments.find(d => d.slug === art.departmentSlug)?.id 
-      : null;
-
-    const newDeptId = departmentId ? idMap.get(departmentId) : null;
-    const authorId = idMap.get(art.author.id);
-    const categoryId = idMap.get(art.category.id);
-    const newId = crypto.randomUUID();
-
-    if (!authorId || !categoryId) {
-       console.log('Skipping article due to missing author/category mapping', art.slug);
-       continue;
-    }
-
-    await db.insert(schema.articles).values({
-      id: newId,
-      title: art.title,
-      slug: art.slug,
-      content: art.content,
-      excerpt: art.excerpt,
-      authorId: authorId,
-      categoryId: categoryId,
-      departmentId: newDeptId,
-      featuredImage: art.featuredImage,
-      isPublished: true,
-      isFeatured: art.isFeatured,
-      views: art.views,
-      readingMinutes: art.readingMinutes,
-      publishedAt: new Date(art.publishedAt),
-    }).onConflictDoNothing();
-  }
+  // 4. Events.
+  await db
+    .insert(schema.events)
+    .values(
+      seedData.events.map((event) => ({
+        title: event.title,
+        slug: event.slug,
+        description: event.description,
+        location: event.location,
+        startsAt: new Date(event.startsAt),
+        endsAt: event.endsAt ? new Date(event.endsAt) : null,
+        allDay: event.allDay ?? false,
+        isPublished: true,
+      })),
+    )
+    .onConflictDoNothing({ target: schema.events.slug });
+  console.log(`  events: ${seedData.events.length}`);
 
   console.log('Seeding complete!');
   process.exit(0);

@@ -1,21 +1,23 @@
 import Link from 'next/link'
 import { LayoutDashboard, FileText, Settings, Users, LogOut } from 'lucide-react'
 import { signout } from './actions'
-import { getSessionUser } from '@/lib/auth/server'
+import { requireAdmin } from '@/lib/auth/server'
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const user = await getSessionUser()
-  const initials =
-    user?.name
-      .split(' ')
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) ?? 'A'
+  // The proxy already gates /admin; check again here so the dashboard never
+  // renders on the strength of the proxy alone.
+  const user = await requireAdmin()
+
+  const initials = user.name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -64,7 +66,7 @@ export default async function AdminLayout({
             <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">
               {initials}
             </div>
-            <span className="text-sm font-medium text-slate-700">{user?.name ?? 'Administrator'}</span>
+            <span className="text-sm font-medium text-slate-700">{user.name}</span>
           </div>
         </header>
 

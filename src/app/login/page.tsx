@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { SignInForm } from '@/components/auth/SignInForm'
 import { DemoCredentials } from '@/components/auth/DemoCredentials'
+import { isSupabaseAuthEnabled } from '@/utils/supabase/config'
 
 export const metadata: Metadata = {
   title: 'Sign In',
@@ -12,9 +13,9 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; notice?: string }>
 }) {
-  const { error } = await searchParams
+  const { error, notice } = await searchParams
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
@@ -37,7 +38,7 @@ export default async function LoginPage({
           </p>
         </div>
 
-        <SignInForm origin="portal" error={Boolean(error)} />
+        <SignInForm origin="portal" error={error} notice={notice} />
 
         <p className="mt-6 text-center text-sm text-slate-500">
           New to PTI News?{' '}
@@ -46,7 +47,8 @@ export default async function LoginPage({
           </Link>
         </p>
 
-        <DemoCredentials roles={['student', 'lecturer']} />
+        {/* Demo accounts only exist when Supabase Auth is not configured. */}
+        {!isSupabaseAuthEnabled() && <DemoCredentials roles={['student', 'lecturer']} />}
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Administrator?{' '}

@@ -1,4 +1,5 @@
-import { demoUsers, roleLabels, type UserRole } from '@/lib/auth/demo-users'
+import { demoUsers } from '@/lib/auth/demo-users'
+import { roleLabels, type UserRole } from '@/lib/auth/roles'
 
 const roleStyles: Record<UserRole, string> = {
   admin: 'bg-purple-100 text-purple-700',
@@ -8,8 +9,8 @@ const roleStyles: Record<UserRole, string> = {
 
 /**
  * A read-only cheat sheet of the demo accounts, shown on the login pages so a
- * demo can be signed into without hunting for credentials. Demo-only: these
- * accounts and this component go away when real auth lands.
+ * demo can be signed into without hunting for credentials. Only rendered when
+ * Supabase Auth is not configured — with it on, these accounts don't work.
  */
 export function DemoCredentials({ roles }: { roles?: UserRole[] }) {
   const users = roles ? demoUsers.filter((user) => roles.includes(user.role)) : demoUsers

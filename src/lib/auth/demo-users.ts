@@ -1,13 +1,13 @@
-/**
- * Hardcoded demo accounts.
- *
- * These exist so the demo can be signed into without a live auth provider.
- * Passwords are stored in plain text on purpose — this is throwaway demo data,
- * NOT a real credential store. When Supabase/database auth is wired in, this
- * file and the helpers in `src/lib/auth` are what get replaced.
- */
+import type { SignupRole, UserRole } from './roles';
 
-export type UserRole = 'admin' | 'lecturer' | 'student';
+/**
+ * Hardcoded demo accounts — the auth fallback.
+ *
+ * Used only when Supabase Auth is not configured (no NEXT_PUBLIC_SUPABASE_URL /
+ * publishable key), so the demo can be signed into with zero setup. Passwords
+ * are stored in plain text on purpose — this is throwaway demo data, NOT a real
+ * credential store — and none of these accounts exist in Supabase.
+ */
 
 export interface DemoUser {
   id: string;
@@ -83,9 +83,6 @@ export function findDemoUserByEmail(email: string): DemoUser | null {
   return demoUsers.find((user) => user.email.toLowerCase() === normalized) ?? null;
 }
 
-/** Roles a visitor may choose when signing up — administrators are never self-registered. */
-export type SignupRole = Exclude<UserRole, 'admin'>;
-
 /**
  * Register a new demo account from the sign-up form. The visitor picks their
  * role (student or lecturer). Kept in memory only — it lives for the life of
@@ -108,9 +105,3 @@ export function registerDemoUser(input: {
   demoUsers.push(user);
   return user;
 }
-
-export const roleLabels: Record<UserRole, string> = {
-  admin: 'Administrator',
-  lecturer: 'Lecturer',
-  student: 'Student',
-};

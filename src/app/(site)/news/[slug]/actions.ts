@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth/server'
-import { roleLabels } from '@/lib/auth/demo-users'
 import { addComment, toggleReaction, type ReactionKind } from '@/lib/content/engagement'
 
 /**
@@ -22,7 +21,12 @@ export async function reactToArticle(formData: FormData) {
   const reaction = String(formData.get('reaction') ?? '')
 
   if (articleId && (reaction === 'like' || reaction === 'dislike')) {
-    toggleReaction(articleId, user.id, reaction as ReactionKind)
+    try {
+      await toggleReaction(articleId, user, reaction as ReactionKind)
+    } catch (error) {
+      // A dropped reaction during a database outage is not worth an error page.
+      console.error('[engagement] Could not save reaction', error)
+    }
   }
 
   if (slug) revalidatePath(`/news/${slug}`)
@@ -41,12 +45,8 @@ export async function commentOnArticle(formData: FormData) {
   const content = String(formData.get('content') ?? '').trim()
 
   if (articleId && content) {
-    addComment({
-      articleId,
-      authorName: user.name,
-      roleLabel: roleLabels[user.role],
-      content: content.slice(0, 2000),
-    })
+    // Unlike a reaction, a lost comment is someone's writing — surface it.
+    await addComment(articleId, user, content.slice(0, 2000))
   }
 
   if (slug) revalidatePath(`/news/${slug}`)

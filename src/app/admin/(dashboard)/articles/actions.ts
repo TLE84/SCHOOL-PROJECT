@@ -3,11 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth/server'
-import {
-  createArticleRecord,
-  updateArticleRecord,
-  deleteArticleRecord,
-} from '@/lib/content/store'
+import { deleteArticleById, insertArticle, updateArticleById } from '@/lib/content/mutations'
 import { markupToBlocks } from '@/lib/content/markup'
 
 /**
@@ -37,7 +33,7 @@ export async function createArticle(formData: FormData) {
     throw new Error('Missing required fields')
   }
 
-  createArticleRecord({
+  await insertArticle({
     title,
     slug,
     content: markupToBlocks(rawContent),
@@ -65,7 +61,7 @@ export async function updateArticle(formData: FormData) {
   // Unchecked checkboxes are not submitted, so absence means false.
   const isPublished = formData.get('isPublished') === 'true'
 
-  updateArticleRecord(id, {
+  await updateArticleById(id, {
     title,
     slug,
     content: markupToBlocks(rawContent),
@@ -84,7 +80,7 @@ export async function deleteArticle(formData: FormData) {
   await requireAdmin()
 
   const id = formData.get('id') as string
-  deleteArticleRecord(id)
+  await deleteArticleById(id)
 
   revalidatePath('/admin/articles')
   revalidatePath('/news')

@@ -9,17 +9,15 @@ import {
 } from './seed';
 
 /**
- * In-memory content store for the demo.
+ * In-memory content store — the seed-data fallback.
  *
- * The site is intentionally runnable with zero configuration: rather than
- * requiring a live Postgres/Supabase instance, the read API in `queries.ts`
- * and the admin CRUD actions operate on this hardcoded, seed-backed store.
+ * Backs `queries.seed.ts` and the admin writes in `mutations.ts` when no
+ * `DATABASE_URL` is configured, so the site still runs with zero setup; reads
+ * also fall back to it when the database is unreachable (see `source.ts`).
  *
- * Writes (create/update/delete an article from the admin dashboard) mutate the
- * in-memory array so the demo feels fully functional within a running session.
- * Nothing here persists across a server restart — real persistence lands when
- * the Drizzle/Postgres layer in `src/db` is wired in. When that happens, only
- * this file and `queries.ts` change; every page stays exactly as it is.
+ * Writes mutate the in-memory array so the demo feels fully functional within
+ * a running session. Nothing here persists across a server restart — with a
+ * database configured, writes go there instead.
  */
 
 // A mutable working copy so admin edits never mutate the frozen seed export.
@@ -58,8 +56,7 @@ export function createArticleRecord(input: ArticleInput): Article {
     id: `art-${Date.now()}`,
     title: input.title,
     slug: input.slug,
-    excerpt:
-      input.content.find((block) => block.type === 'paragraph')?.text.slice(0, 180) ?? '',
+    excerpt: deriveExcerpt(input.content) ?? '',
     content: input.content,
     author,
     category,
@@ -68,7 +65,7 @@ export function createArticleRecord(input: ArticleInput): Article {
     isFeatured: false,
     isPublished: input.isPublished,
     publishedAt: new Date().toISOString(),
-    readingMinutes: Math.max(1, Math.round(estimateWords(input.content) / 200)),
+    readingMinutes: estimateReadingMinutes(input.content),
     views: 0,
   };
 
@@ -89,9 +86,8 @@ export function updateArticleRecord(id: string, input: ArticleInput): Article | 
   existing.category = category;
   existing.author = author;
   existing.isPublished = input.isPublished;
-  existing.readingMinutes = Math.max(1, Math.round(estimateWords(input.content) / 200));
-  existing.excerpt =
-    input.content.find((block) => block.type === 'paragraph')?.text.slice(0, 180) ?? existing.excerpt;
+  existing.readingMinutes = estimateReadingMinutes(input.content);
+  existing.excerpt = deriveExcerpt(input.content) ?? existing.excerpt;
   if (input.featuredImage !== undefined) {
     existing.featuredImage = input.featuredImage || undefined;
   }
@@ -106,11 +102,18 @@ export function deleteArticleRecord(id: string): boolean {
   return true;
 }
 
-function estimateWords(content: ContentBlock[]): number {
-  return content.reduce((total, block) => {
+/** The first paragraph, trimmed to card length — or undefined if there is none. */
+export function deriveExcerpt(content: ContentBlock[]): string | undefined {
+  return content.find((block) => block.type === 'paragraph')?.text.slice(0, 180);
+}
+
+/** Roughly 200 words a minute, never less than one. */
+export function estimateReadingMinutes(content: ContentBlock[]): number {
+  const words = content.reduce((total, block) => {
     const text = 'text' in block ? block.text : '';
     return total + text.split(/\s+/).filter(Boolean).length;
   }, 0);
+  return Math.max(1, Math.round(words / 200));
 }
 
 export { authors, categories, departments, certificateCourses, events };

@@ -6,7 +6,7 @@ import { navLinks } from './nav-links';
 import { getSessionUser } from '@/lib/auth/server';
 import { signOut } from '@/lib/auth/actions';
 import { homePathForRole, type SessionUser } from '@/lib/auth/session';
-import { roleLabels } from '@/lib/auth/demo-users';
+import { roleLabels } from '@/lib/auth/roles';
 
 export async function Navbar() {
   const user = await getSessionUser();

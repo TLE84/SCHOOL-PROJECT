@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { LogOut } from 'lucide-react'
 import { getSessionUser } from '@/lib/auth/server'
 import { signOut } from '@/lib/auth/actions'
-import { roleLabels } from '@/lib/auth/demo-users'
+import { roleLabels } from '@/lib/auth/roles'
 
 export default async function PortalLayout({
   children,

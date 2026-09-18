@@ -23,18 +23,30 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 News, events and department content are served from a built-in seed dataset
 (`src/lib/content`), so the public site is fully populated with no database.
 
+With Supabase configured (see [Environment Variables](#️-environment-variables)),
+content, comments, reactions and newsletter sign-ups come from Postgres and
+sign-in uses Supabase Auth. The seed data stays as the fallback: if the
+database is unreachable, pages keep rendering from it.
+
 ---
 
-## 🔐 Demo Access
+## 🔐 Sign-in
 
-Authentication is currently a **hardcoded demo** (no Supabase/database required)
-so the app can be signed into out of the box. Real database-backed auth is the
-next milestone. Two sign-in entry points:
+Two sign-in entry points:
 
 - **Students & lecturers:** [`/login`](http://localhost:3000/login) → the campus
   news **Portal** (`/portal`)
 - **Administrators:** [`/admin/login`](http://localhost:3000/admin/login) → the
   **Admin dashboard** (`/admin`)
+
+**With Supabase Auth** (URL + publishable key set), people create accounts at
+`/signup` as a student or lecturer. Administrators are never self-registered:
+promote an existing account with
+`npm run auth:set-role -- their@email.com admin`. Roles are stored in the
+account's `app_metadata`, which users cannot edit.
+
+**Without Supabase**, a hardcoded demo takes over so the app can still be
+signed into out of the box:
 
 | Role | Email | Password |
 | :--- | :--- | :--- |
@@ -45,8 +57,9 @@ next milestone. Two sign-in entry points:
 | Student | `blessing.okowa@pti.edu.ng` | `student123` |
 
 The full list is defined in `src/lib/auth/demo-users.ts`, and each login page
-also displays the relevant credentials for convenience. These accounts and the
-cookie-based demo session are throwaway plumbing — **not** a secure auth system.
+also displays the relevant credentials in demo mode. These accounts and the
+cookie-based demo session are throwaway plumbing — **not** a secure auth
+system — which is why they are switched off entirely once Supabase is set up.
 
 ---
 
@@ -76,13 +89,13 @@ graph TD
     
     subgraph ContentLayer ["Content Abstraction Layer"]
         Pages --> QueryAPI["Read API (src/lib/content/queries.ts)"]
-        QueryAPI --> SeedData["Seed Dataset (src/lib/content/seed.ts)"]
-        QueryAPI -. "Future DB Wiring" .-> DrizzleORM["Drizzle ORM (src/db/schema.ts)"]
+        QueryAPI --> DrizzleORM["Drizzle ORM (src/db)"]
+        QueryAPI -. "Fallback: no DB / DB unreachable" .-> SeedData["Seed Dataset (src/lib/content/seed.ts)"]
     end
 
     subgraph DataLayer ["Data & Auth Services"]
-        DrizzleORM -.-> Postgres[("PostgreSQL / Supabase")]
-        Pages -.-> SupabaseAuth["Supabase Auth (src/utils/supabase/*)"]
+        DrizzleORM --> Postgres[("Supabase Postgres (transaction pooler)")]
+        Pages --> SupabaseAuth["Supabase Auth (src/utils/supabase/*)"]
     end
 ```
 
@@ -131,19 +144,39 @@ campus-website-news/
 | `npm run lint` | Runs ESLint validation across the repository |
 | `npm run typecheck` | Executes TypeScript type checking (`tsc --noEmit`) |
 | `npx playwright test` | Runs end-to-end browser tests |
+| `npm run supabase:check` | Verifies every Supabase variable in `.env.local` actually works (prints no secrets) |
+| `npm run db:generate` | Generates a migration in `drizzle/` after changing `src/db/schema.ts` |
+| `npm run db:migrate` | Applies pending migrations to `DATABASE_URL` |
+| `npm run db:seed` | Loads the built-in seed content into the database (safe to re-run) |
+| `npm run auth:set-role -- <email> <role>` | Sets an account's role (`admin`, `lecturer`, `student`) |
 
 ---
 
 ## ⚙️ Environment Variables
 
-Creating `.env.local` is optional for initial setup. When deploying to Vercel or connecting to live PostgreSQL/Supabase instances, configure these variables:
+All optional — each one switches a piece from the built-in fallback to
+Supabase. See `.env.example` for details, and run `npm run supabase:check`
+after changing them.
 
-| Variable | Required? | Purpose |
-| :--- | :--- | :--- |
-| `NEXT_PUBLIC_SITE_URL` | Optional | Canonical site origin for OpenGraph images and social sharing. Defaults to Vercel domain if unconfigured. |
-| `DATABASE_URL` | Optional | PostgreSQL connection string for Drizzle ORM queries (`src/db/schema.ts`). |
-| `NEXT_PUBLIC_SUPABASE_URL` | Optional | Supabase project endpoint URL. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Optional | Supabase anonymous API key for browser/server helpers. |
+| Variable | Purpose |
+| :--- | :--- |
+| `NEXT_PUBLIC_SITE_URL` | Canonical site origin for OpenGraph and share links. Defaults to the Vercel domain; don't set it to localhost on Vercel. |
+| `DATABASE_URL` | Supabase **Transaction pooler** URI (port 6543). Without it, content comes from the seed dataset. The direct `db.<ref>.supabase.co` host is IPv6-only and won't work on Vercel. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (`NEXT_PUBLIC_SUPABASE_ANON_KEY` also accepted). With the URL, turns on Supabase Auth and disables the demo accounts. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** secret key. Saves the role chosen at sign-up and powers the admin Users page. Never prefix with `NEXT_PUBLIC_`. |
+
+### First-time database setup
+
+```bash
+npm run db:migrate   # create the tables (row-level security on every table)
+npm run db:seed      # load the built-in articles, events and departments
+npm run supabase:check
+```
+
+Every table has row-level security enabled with no policies: the app talks to
+Postgres directly through the pooler, while Supabase's public Data API (reachable
+with the browser-visible publishable key) can read and write nothing.
 
 ---
 
@@ -152,7 +185,10 @@ Creating `.env.local` is optional for initial setup. When deploying to Vercel or
 1. Push your code to GitHub.
 2. Import the project on [Vercel](https://vercel.com/new).
 3. Framework settings (Next.js), build command (`npm run build`), and output directory are automatically detected.
-4. (Optional) Set `NEXT_PUBLIC_SITE_URL` in **Project Settings → Environment Variables** once a custom domain is assigned (e.g. `https://news.pti.edu.ng`).
+4. Add the variables above in **Project Settings → Environment Variables**, then redeploy (`NEXT_PUBLIC_*` values are baked in at build time).
+5. In Supabase, open **Authentication → URL Configuration**: set **Site URL** to the production URL and add `https://<your-domain>/**` (and `http://localhost:3000/**` for local work) to **Redirect URLs**, so confirmation emails link back to the site.
+6. Recommended: set the Vercel **Function Region** to the one closest to the database (for a Supabase project in `eu-west-1`, that's Dublin, `dub1`). Every page makes several queries, so this matters.
+7. Open **/admin/settings** on the deployment — the **Backend status** panel confirms the database and auth are connected.
 
 ---
 

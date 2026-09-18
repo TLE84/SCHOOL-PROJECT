@@ -1,11 +1,18 @@
+import { isDatabaseConfigured } from '@/db';
+import { syncProfile } from '@/lib/auth/profile';
+import { roleLabels } from '@/lib/auth/roles';
+import type { SessionUser } from '@/lib/auth/session';
+import * as database from './engagement.db';
+import * as memory from './engagement.seed';
+import { assertDatabaseWritable, isUuid, readWithFallback } from './source';
+
 /**
- * In-memory likes, dislikes and comments for the demo.
+ * Likes, dislikes and comments on articles.
  *
- * Mirrors the seed-backed content store: interactions live for the life of the
- * running server and reset on restart. Real, persisted engagement (and one row
- * per user) arrives with the database layer. Reactions are keyed by user id so
- * a signed-in user can toggle their own like/dislike; a small seeded baseline
- * makes the counts look alive in the demo.
+ * Database-backed when `DATABASE_URL` is set, in-memory otherwise. Articles
+ * from the database have UUID ids; seed articles (served when no database is
+ * configured, or as a fallback) have ids like `art-…`, and their engagement
+ * always comes from the in-memory store — so a fallback page stays consistent.
  */
 
 export type ReactionKind = 'like' | 'dislike';
@@ -26,117 +33,45 @@ export interface ReactionSummary {
   userReaction: ReactionKind | null;
 }
 
-interface ReactionRecord {
-  baseLikes: number;
-  baseDislikes: number;
-  likeUsers: Set<string>;
-  dislikeUsers: Set<string>;
+function inDatabase(articleId: string): boolean {
+  return isDatabaseConfigured() && isUuid(articleId);
 }
 
-const reactions = new Map<string, ReactionRecord>();
-const comments = new Map<string, CommentView[]>();
-
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-function record(articleId: string): ReactionRecord {
-  let rec = reactions.get(articleId);
-  if (!rec) {
-    rec = { baseLikes: 0, baseDislikes: 0, likeUsers: new Set(), dislikeUsers: new Set() };
-    reactions.set(articleId, rec);
-  }
-  return rec;
-}
-
-export function getReactionSummary(articleId: string, userId?: string): ReactionSummary {
-  const rec = reactions.get(articleId);
-  if (!rec) return { likes: 0, dislikes: 0, userReaction: null };
-  return {
-    likes: rec.baseLikes + rec.likeUsers.size,
-    dislikes: rec.baseDislikes + rec.dislikeUsers.size,
-    userReaction: userId
-      ? rec.likeUsers.has(userId)
-        ? 'like'
-        : rec.dislikeUsers.has(userId)
-          ? 'dislike'
-          : null
-      : null,
-  };
-}
-
-/** Toggle a user's reaction. Re-selecting the same reaction clears it. */
-export function toggleReaction(articleId: string, userId: string, kind: ReactionKind): void {
-  const rec = record(articleId);
-  const [chosen, other] =
-    kind === 'like' ? [rec.likeUsers, rec.dislikeUsers] : [rec.dislikeUsers, rec.likeUsers];
-
-  if (chosen.has(userId)) {
-    chosen.delete(userId);
-  } else {
-    chosen.add(userId);
-    other.delete(userId);
-  }
-}
-
-export function getComments(articleId: string): CommentView[] {
-  return [...(comments.get(articleId) ?? [])].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+export function getReactionSummary(articleId: string, userId?: string): Promise<ReactionSummary> {
+  if (!inDatabase(articleId)) return Promise.resolve(memory.getReactionSummary(articleId, userId));
+  return readWithFallback(
+    'getReactionSummary',
+    () => database.getReactionSummary(articleId, userId),
+    () => memory.getReactionSummary(articleId, userId),
   );
 }
 
-export function getCommentCount(articleId: string): number {
-  return comments.get(articleId)?.length ?? 0;
+export function getComments(articleId: string): Promise<CommentView[]> {
+  if (!inDatabase(articleId)) return Promise.resolve(memory.getComments(articleId));
+  return readWithFallback(
+    'getComments',
+    () => database.getComments(articleId),
+    () => memory.getComments(articleId),
+  );
 }
 
-export function addComment(input: {
-  articleId: string;
-  authorName: string;
-  roleLabel: string;
-  content: string;
-}): CommentView {
-  const comment: CommentView = {
-    id: `cmt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    articleId: input.articleId,
-    authorName: input.authorName,
-    authorInitials: initials(input.authorName),
-    roleLabel: input.roleLabel,
-    content: input.content,
-    createdAt: new Date().toISOString(),
-  };
-  const list = comments.get(input.articleId) ?? [];
-  list.push(comment);
-  comments.set(input.articleId, list);
-  return comment;
+export async function toggleReaction(articleId: string, user: SessionUser, kind: ReactionKind): Promise<void> {
+  if (!inDatabase(articleId)) {
+    memory.toggleReaction(articleId, user.id, kind);
+    return;
+  }
+  assertDatabaseWritable();
+  // Reactions reference public.user, so make sure this account has its row.
+  await syncProfile(user);
+  await database.toggleReaction(articleId, user.id, kind);
 }
 
-// --- Seed a little baseline so the demo isn't empty ---
-
-function seedReactions(articleId: string, likes: number, dislikes: number) {
-  const rec = record(articleId);
-  rec.baseLikes = likes;
-  rec.baseDislikes = dislikes;
+export async function addComment(articleId: string, user: SessionUser, content: string): Promise<void> {
+  if (!inDatabase(articleId)) {
+    memory.addComment({ articleId, authorName: user.name, roleLabel: roleLabels[user.role], content });
+    return;
+  }
+  assertDatabaseWritable();
+  await syncProfile(user);
+  await database.addComment(articleId, user.id, content);
 }
-
-seedReactions('art-matriculation-2026', 42, 3);
-seedReactions('art-innovation-hub', 28, 1);
-seedReactions('art-src-suspends-sug-president', 15, 7);
-seedReactions('art-tech-competition', 19, 0);
-
-addComment({
-  articleId: 'art-matriculation-2026',
-  authorName: 'Dr. Samuel E. Onoji',
-  roleLabel: 'Lecturer',
-  content: 'Congratulations to all our new students. Welcome to the institute!',
-});
-addComment({
-  articleId: 'art-innovation-hub',
-  authorName: 'Blessing Okowa',
-  roleLabel: 'Student',
-  content: 'This is fantastic — can’t wait to book time in the new hub.',
-});
