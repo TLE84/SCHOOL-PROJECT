@@ -2,7 +2,12 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { authenticateDemoUser, findDemoUserByEmail, registerDemoUser } from './demo-users';
+import {
+  authenticateDemoUser,
+  findDemoUserByEmail,
+  registerDemoUser,
+  type SignupRole,
+} from './demo-users';
 import { createSession, destroySession } from './server';
 import { homePathForRole } from './session';
 
@@ -37,6 +42,7 @@ export async function signUp(formData: FormData): Promise<void> {
   const name = String(formData.get('name') ?? '').trim();
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
+  const role = String(formData.get('role') ?? '');
 
   if (!name || !email || !password) {
     redirect('/signup?error=missing');
@@ -47,11 +53,14 @@ export async function signUp(formData: FormData): Promise<void> {
   if (password.length < 6) {
     redirect('/signup?error=password');
   }
+  if (role !== 'student' && role !== 'lecturer') {
+    redirect('/signup?error=role');
+  }
   if (findDemoUserByEmail(email)) {
     redirect('/signup?error=exists');
   }
 
-  const user = registerDemoUser({ name, email, password });
+  const user = registerDemoUser({ name, email, password, role: role as SignupRole });
   await createSession(user);
   revalidatePath('/', 'layout');
   redirect(homePathForRole(user.role));

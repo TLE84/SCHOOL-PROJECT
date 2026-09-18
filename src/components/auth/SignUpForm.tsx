@@ -4,8 +4,14 @@ const errorMessages: Record<string, string> = {
   missing: 'Please fill in your name, email and password.',
   email: 'Please enter a valid email address.',
   password: 'Your password must be at least 6 characters.',
+  role: 'Please choose whether you are a student or a lecturer.',
   exists: 'An account with that email already exists. Try signing in instead.',
 }
+
+const roleOptions = [
+  { value: 'student', label: 'Student' },
+  { value: 'lecturer', label: 'Lecturer' },
+] as const
 
 export function SignUpForm({ error }: { error?: string }) {
   const message = error ? errorMessages[error] ?? 'Something went wrong. Please try again.' : null
@@ -58,6 +64,27 @@ export function SignUpForm({ error }: { error?: string }) {
           placeholder="At least 6 characters"
         />
       </div>
+
+      <fieldset>
+        <legend className="block text-sm font-medium text-slate-700 mb-1">I am a</legend>
+        <div className="grid grid-cols-2 gap-3">
+          {roleOptions.map((option, index) => (
+            <label key={option.value} className="cursor-pointer">
+              <input
+                type="radio"
+                name="role"
+                value={option.value}
+                defaultChecked={index === 0}
+                className="peer sr-only"
+              />
+              <span className="flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-400 peer-checked:border-green-600 peer-checked:bg-green-50 peer-checked:text-green-700 peer-focus-visible:ring-2 peer-focus-visible:ring-green-600">
+                {option.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <button
         formAction={signUp}
         className="w-full bg-green-700 text-white font-semibold py-2.5 rounded-lg hover:bg-green-800 transition-colors mt-2"

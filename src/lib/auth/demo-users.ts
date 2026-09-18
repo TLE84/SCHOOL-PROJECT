@@ -83,23 +83,27 @@ export function findDemoUserByEmail(email: string): DemoUser | null {
   return demoUsers.find((user) => user.email.toLowerCase() === normalized) ?? null;
 }
 
+/** Roles a visitor may choose when signing up — administrators are never self-registered. */
+export type SignupRole = Exclude<UserRole, 'admin'>;
+
 /**
- * Register a new demo account from the sign-up form. New accounts default to
- * the `student` role. Kept in memory only — it lives for the life of the
- * running server, exactly like the seed-backed content store. Real, persisted
- * registration arrives with the database-backed auth layer.
+ * Register a new demo account from the sign-up form. The visitor picks their
+ * role (student or lecturer). Kept in memory only — it lives for the life of
+ * the running server, exactly like the seed-backed content store. Real,
+ * persisted registration arrives with the database-backed auth layer.
  */
 export function registerDemoUser(input: {
   name: string;
   email: string;
   password: string;
+  role: SignupRole;
 }): DemoUser {
   const user: DemoUser = {
     id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: input.name.trim(),
     email: input.email.trim(),
     password: input.password,
-    role: 'student',
+    role: input.role,
   };
   demoUsers.push(user);
   return user;
