@@ -46,6 +46,11 @@ export function getDb() {
       // two reads with Promise.all would hang. 0 makes concurrent queries queue
       // for the connection instead. Undocumented (and untyped) but stable
       // since postgres.js 3.0 — see `max_pipeline` in its connection.js.
+      //
+      // Trade-off: this also stops postgres.js reserving a connection for
+      // `sql.begin`, so `db.transaction()` fails with UNSAFE_TRANSACTION.
+      // Nothing uses transactions today; order multi-step writes so each step
+      // leaves valid data (foreign keys help), or reserve a connection.
       max_pipeline: 0,
       // Fail fast so an unreachable database falls back to seed content quickly
       // instead of holding the page for the driver's 30s default.

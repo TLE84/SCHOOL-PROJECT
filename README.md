@@ -45,6 +45,11 @@ promote an existing account with
 `npm run auth:set-role -- their@email.com admin`. Roles are stored in the
 account's `app_metadata`, which users cannot edit.
 
+`npm run auth:seed-users` creates a starter set of confirmed accounts (1 admin,
+2 lecturers, 2 students — the same people as the demo accounts below) with
+freshly generated passwords, printed once. Re-running it leaves existing
+accounts alone; add `-- --reset-passwords` to issue new passwords.
+
 **Without Supabase**, a hardcoded demo takes over so the app can still be
 signed into out of the box:
 
@@ -149,6 +154,7 @@ campus-website-news/
 | `npm run db:migrate` | Applies pending migrations to `DATABASE_URL` |
 | `npm run db:seed` | Loads the built-in seed content into the database (safe to re-run) |
 | `npm run auth:set-role -- <email> <role>` | Sets an account's role (`admin`, `lecturer`, `student`) |
+| `npm run auth:seed-users` | Creates the starter Supabase accounts (1 admin, 2 lecturers, 2 students) and prints their passwords |
 
 ---
 

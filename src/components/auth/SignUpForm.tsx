@@ -1,4 +1,5 @@
 import { signUp } from '@/lib/auth/actions'
+import { SubmitButton } from './SubmitButton'
 
 const errorMessages: Record<string, string> = {
   missing: 'Please fill in your name, email and password.',
@@ -88,12 +89,9 @@ export function SignUpForm({ error }: { error?: string }) {
         </div>
       </fieldset>
 
-      <button
-        formAction={signUp}
-        className="w-full bg-green-700 text-white font-semibold py-2.5 rounded-lg hover:bg-green-800 transition-colors mt-2"
-      >
+      <SubmitButton formAction={signUp} pendingLabel="Creating account…">
         Create account
-      </button>
+      </SubmitButton>
     </form>
   )
 }

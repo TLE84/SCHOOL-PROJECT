@@ -8,11 +8,11 @@
  * offers student or lecturer). The person should sign out and back in for the
  * new role to reach their session everywhere.
  */
-import { createClient } from '@supabase/supabase-js';
 import { eq } from 'drizzle-orm';
 import { getDb, isDatabaseConfigured } from '../src/db';
 import { users } from '../src/db/schema';
 import { isUserRole, USER_ROLES } from '../src/lib/auth/roles';
+import { createScriptAdminClient } from './supabase-admin';
 
 async function main() {
   const [email, role] = process.argv.slice(2);
@@ -21,14 +21,7 @@ async function main() {
     process.exit(1);
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
-  if (!url || !serviceKey) {
-    console.error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local.');
-    process.exit(1);
-  }
-
-  const admin = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+  const admin = createScriptAdminClient();
 
   // No lookup-by-email in the admin API, so page through the accounts.
   const wanted = email.trim().toLowerCase();

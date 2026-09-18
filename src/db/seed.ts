@@ -1,4 +1,4 @@
-import { inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull } from 'drizzle-orm';
 import { getDb } from './index';
 import * as schema from './schema';
 import * as seedData from '../lib/content/seed';
@@ -36,24 +36,37 @@ async function upsertBySlug<T extends { slug: string }>(
 async function seed() {
   console.log('Seeding database...');
 
-  // 1. Byline authors. These are profiles only — no sign-in account, no role —
-  //    so the `.invalid` address (reserved, never deliverable) can never clash
-  //    with a real person signing up.
-  const authors = Object.values(seedData.authors);
-  await db
-    .insert(schema.users)
-    .values(
-      authors.map((author) => ({
+  // 1. Authors. If a sign-in account with the author's name already exists
+  //    (e.g. from `npm run auth:seed-users`), credit their articles to it
+  //    rather than creating a second profile for the same person. Otherwise
+  //    create a byline-only profile — no account, no role — whose `.invalid`
+  //    address (reserved, never deliverable) can never clash with a sign-up.
+  const authorIds = new Map<string, string>();
+  for (const author of Object.values(seedData.authors)) {
+    const [account] = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(and(eq(schema.users.name, author.name), isNotNull(schema.users.role)))
+      .limit(1);
+    if (account) {
+      authorIds.set(author.id, account.id);
+      continue;
+    }
+
+    await db
+      .insert(schema.users)
+      .values({
         id: author.id,
         name: author.name,
         email: `${author.id}@bylines.invalid`,
         emailVerified: false,
         jobTitle: author.role,
         bio: author.bio,
-      })),
-    )
-    .onConflictDoNothing();
-  console.log(`  authors: ${authors.length}`);
+      })
+      .onConflictDoNothing();
+    authorIds.set(author.id, author.id);
+  }
+  console.log(`  authors: ${authorIds.size}`);
 
   // 2. Taxonomy.
   const categoryIds = await upsertBySlug(
@@ -93,7 +106,7 @@ async function seed() {
         slug: article.slug,
         content: article.content,
         excerpt: article.excerpt,
-        authorId: article.author.id,
+        authorId: authorIds.get(article.author.id)!,
         categoryId,
         departmentId: article.departmentSlug ? departmentIds.get(article.departmentSlug) : null,
         featuredImage: article.featuredImage,

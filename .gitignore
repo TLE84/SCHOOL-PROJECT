@@ -47,6 +47,9 @@ CLAUDE.md
 .next/
 PROJECT_CONTEXT.md
 
+# Account passwords — local only, never commit
+LOGINS.md
+
 # Playwright
 /test-results/
 /playwright-report/

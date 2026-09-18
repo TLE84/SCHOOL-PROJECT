@@ -1,4 +1,5 @@
 import { signIn } from '@/lib/auth/actions'
+import { SubmitButton } from './SubmitButton'
 
 const errorMessages: Record<string, string> = {
   credentials: 'Incorrect email or password. Please try again.',
@@ -67,12 +68,9 @@ export function SignInForm({ origin, error, notice, defaultEmail }: SignInFormPr
           className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-green-600 outline-none transition-colors"
         />
       </div>
-      <button
-        formAction={signIn}
-        className="w-full bg-green-700 text-white font-semibold py-2.5 rounded-lg hover:bg-green-800 transition-colors mt-2"
-      >
+      <SubmitButton formAction={signIn} pendingLabel="Signing in…">
         Sign In
-      </button>
+      </SubmitButton>
     </form>
   )
 }
