@@ -44,6 +44,7 @@ export interface ArticleInput {
   categoryId: string;
   authorId: string;
   isPublished: boolean;
+  featuredImage?: string;
 }
 
 export function createArticleRecord(input: ArticleInput): Article {
@@ -62,6 +63,7 @@ export function createArticleRecord(input: ArticleInput): Article {
     content: input.content,
     author,
     category,
+    featuredImage: input.featuredImage || undefined,
     tags: [],
     isFeatured: false,
     isPublished: input.isPublished,
@@ -88,6 +90,11 @@ export function updateArticleRecord(id: string, input: ArticleInput): Article | 
   existing.author = author;
   existing.isPublished = input.isPublished;
   existing.readingMinutes = Math.max(1, Math.round(estimateWords(input.content) / 200));
+  existing.excerpt =
+    input.content.find((block) => block.type === 'paragraph')?.text.slice(0, 180) ?? existing.excerpt;
+  if (input.featuredImage !== undefined) {
+    existing.featuredImage = input.featuredImage || undefined;
+  }
 
   return existing;
 }

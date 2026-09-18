@@ -8,7 +8,7 @@ import {
   updateArticleRecord,
   deleteArticleRecord,
 } from '@/lib/content/store'
-import type { ContentBlock } from '@/lib/content/types'
+import { markupToBlocks } from '@/lib/content/markup'
 
 /**
  * Ensure the current user is a signed-in administrator before any mutation.
@@ -22,16 +22,6 @@ async function requireAdmin() {
   return user
 }
 
-/** Turn a plain-text body (blank-line separated) into content blocks. */
-function toContentBlocks(raw: string): ContentBlock[] {
-  const paragraphs = raw
-    .split(/\n{2,}/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-  const blocks: ContentBlock[] = paragraphs.map((text) => ({ type: 'paragraph', text }))
-  return blocks.length > 0 ? blocks : [{ type: 'paragraph', text: raw }]
-}
-
 export async function createArticle(formData: FormData) {
   await requireAdmin()
 
@@ -41,6 +31,7 @@ export async function createArticle(formData: FormData) {
   const isPublished = formData.get('isPublished') === 'true'
   const categoryId = formData.get('categoryId') as string
   const authorId = formData.get('authorId') as string
+  const featuredImage = ((formData.get('featuredImage') as string) ?? '').trim()
 
   if (!title || !slug || !rawContent || !categoryId || !authorId) {
     throw new Error('Missing required fields')
@@ -49,10 +40,11 @@ export async function createArticle(formData: FormData) {
   createArticleRecord({
     title,
     slug,
-    content: toContentBlocks(rawContent),
+    content: markupToBlocks(rawContent),
     isPublished,
     authorId,
     categoryId,
+    featuredImage,
   })
 
   revalidatePath('/admin/articles')
@@ -69,16 +61,18 @@ export async function updateArticle(formData: FormData) {
   const rawContent = formData.get('content') as string
   const categoryId = formData.get('categoryId') as string
   const authorId = formData.get('authorId') as string
+  const featuredImage = ((formData.get('featuredImage') as string) ?? '').trim()
   // Unchecked checkboxes are not submitted, so absence means false.
   const isPublished = formData.get('isPublished') === 'true'
 
   updateArticleRecord(id, {
     title,
     slug,
-    content: toContentBlocks(rawContent),
+    content: markupToBlocks(rawContent),
     categoryId,
     authorId,
     isPublished,
+    featuredImage,
   })
 
   revalidatePath('/admin/articles')

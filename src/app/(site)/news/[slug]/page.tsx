@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight, Mail, CheckCircle, Link as LinkIcon } from 'lucide-react';
+import { ChevronRight, Mail, CheckCircle, Link as LinkIcon, Pencil } from 'lucide-react';
 import { Pill } from '@/components/ui/Pill';
 import { ShareLinks } from '@/components/ui/ShareLinks';
 import { getArticleBySlug, getRelatedArticles } from '@/lib/content/queries';
+import { getSessionUser } from '@/lib/auth/server';
 import { formatDate } from '@/lib/format';
 
 type Params = { params: Promise<{ slug: string }> };
@@ -41,9 +42,24 @@ export default async function ArticlePage({ params }: Params) {
 
   const related = await getRelatedArticles(article, 3);
   const headings = article.content.filter((block) => block.type === 'heading');
+  const sessionUser = await getSessionUser();
+  const isAdmin = sessionUser?.role === 'admin';
 
   return (
     <div className="bg-white min-h-screen pb-24">
+      {isAdmin && (
+        <div className="bg-slate-900 text-white">
+          <div className="container mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 max-w-7xl py-3 text-sm font-sans">
+            <span className="font-medium">You are viewing this published article as an administrator.</span>
+            <Link
+              href={`/admin/articles/${article.id}/edit`}
+              className="inline-flex shrink-0 items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 font-medium transition-colors hover:bg-white/20"
+            >
+              <Pencil size={14} aria-hidden="true" /> Edit this article
+            </Link>
+          </div>
+        </div>
+      )}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-7xl">
         <nav aria-label="Breadcrumb" className="mb-10">
           <ol className="flex flex-wrap items-center gap-3 text-sm text-slate-500 font-sans font-medium tracking-wide uppercase">
@@ -148,10 +164,32 @@ export default async function ArticlePage({ params }: Params) {
                       className="border-l-4 border-green-700 bg-green-50/50 p-8 rounded-r-xl italic text-2xl text-slate-800 my-12 shadow-sm font-serif"
                     >
                       {block.text}
-                      <footer className="text-lg text-slate-600 mt-6 not-italic font-sans font-bold uppercase tracking-wide">
-                        — {block.attribution}
-                      </footer>
+                      {block.attribution && (
+                        <footer className="text-lg text-slate-600 mt-6 not-italic font-sans font-bold uppercase tracking-wide">
+                          — {block.attribution}
+                        </footer>
+                      )}
                     </blockquote>
+                  );
+                }
+                if (block.type === 'image') {
+                  return (
+                    <figure key={index} className="not-prose my-12">
+                      <div className="relative w-full aspect-[16/9] overflow-hidden rounded-xl bg-slate-100 shadow-sm">
+                        <Image
+                          src={block.url}
+                          alt={block.alt ?? ''}
+                          fill
+                          sizes="(min-width: 1024px) 66vw, 100vw"
+                          className="object-cover"
+                        />
+                      </div>
+                      {block.caption && (
+                        <figcaption className="mt-3 text-center text-sm text-slate-500 font-sans">
+                          {block.caption}
+                        </figcaption>
+                      )}
+                    </figure>
                   );
                 }
                 return <p key={index}>{block.text}</p>;

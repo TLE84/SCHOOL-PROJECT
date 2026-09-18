@@ -57,7 +57,9 @@ export type ContentBlock =
    * correction, or right-of-reply statement. Rendered as a labelled callout
    * so readers do not mistake it for the story itself.
    */
-  | { type: 'note'; label: string; text: string };
+  | { type: 'note'; label: string; text: string }
+  /** An inline picture within the article body, with an optional caption. */
+  | { type: 'image'; url: string; alt?: string; caption?: string };
 
 export interface Article {
   id: string;

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
 import { createArticle } from '../actions'
 import { getCategories, getUsers } from '@/lib/content/queries'
+import { FeaturedImageField } from '@/components/admin/FeaturedImageField'
+import { FormattingHelp } from '@/components/admin/FormattingHelp'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,16 +50,25 @@ export default async function NewArticlePage() {
             </div>
           </div>
 
+          <FeaturedImageField />
+
           <div className="space-y-2">
             <label htmlFor="content" className="text-sm font-medium text-slate-700">Article Content</label>
-            <textarea 
-              id="content" 
-              name="content" 
-              required 
-              rows={12}
-              placeholder="Write the article content here. Markdown is supported."
+            <textarea
+              id="content"
+              name="content"
+              required
+              rows={14}
+              placeholder={
+                'Write the story here.\n\n' +
+                '# A section heading\n\n' +
+                'A normal paragraph of text.\n\n' +
+                '> A pulled quote — Someone\n\n' +
+                '![A caption](/images/pti_students_lab.jpg)'
+              }
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 outline-none resize-y font-mono text-sm"
             />
+            <FormattingHelp />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
