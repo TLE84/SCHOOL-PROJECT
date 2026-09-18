@@ -20,8 +20,8 @@ export const navLinks: NavLink[] = [
  * so the mobile menu is the only way to reach them on a phone.
  */
 export const audienceLinks: NavLink[] = [
-  { name: 'Students', href: '#' },
-  { name: 'Staff', href: '#' },
+  { name: 'Students', href: '/login' },
+  { name: 'Staff', href: '/login' },
   { name: 'Alumni', href: '#' },
-  { name: 'Portal', href: '#' },
+  { name: 'Sign In', href: '/login' },
 ];

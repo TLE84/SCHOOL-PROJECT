@@ -1,45 +1,29 @@
-import { getDb } from '@/db';
-import { eq, desc, and, not, count } from 'drizzle-orm';
-import * as schema from '@/db/schema';
-import type { Article, CampusEvent, Category, CertificateCourse, Department, Paginated, ContentBlock } from './types';
+import type { Article, CampusEvent, Category, CertificateCourse, Department, Paginated } from './types';
+import {
+  listArticles,
+  findArticleBySlug,
+  findArticleById,
+  authors,
+  categories as allCategories,
+  departments as allDepartments,
+  certificateCourses as allCertificateCourses,
+  events as allEvents,
+} from './store';
+
+/**
+ * Read API for the site's content.
+ *
+ * For the demo this reads from the in-memory, seed-backed store in `store.ts`
+ * so the site runs with zero configuration — no database or environment
+ * variables required. The function signatures match what the real Drizzle
+ * queries will expose, so when the database is wired in only this file and
+ * `store.ts` change; every page consuming these functions stays as it is.
+ */
 
 export const ARTICLES_PER_PAGE = 6;
 
-function mapArticle(row: any): Article {
-  return {
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    excerpt: row.excerpt ?? '',
-    content: (row.content as ContentBlock[]) ?? [],
-    author: {
-      id: row.author.id,
-      name: row.author.name,
-      role: row.author.jobTitle ?? undefined,
-      bio: row.author.bio ?? undefined,
-      initials: row.author.name
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2),
-    },
-    category: {
-      id: row.category.id,
-      name: row.category.name,
-      slug: row.category.slug,
-      description: row.category.description ?? '',
-    },
-    departmentSlug: row.department?.slug,
-    featuredImage: row.featuredImage ?? undefined,
-    tags: row.tags?.map((t: any) => ({ name: t.tag.name, slug: t.tag.slug })) ?? [],
-    isFeatured: row.isFeatured,
-    isPublished: row.isPublished,
-    publishedAt: row.publishedAt?.toISOString() ?? new Date().toISOString(),
-    readingMinutes: row.readingMinutes,
-    views: row.views,
-  };
-}
+const byPublishedDesc = (a: Article, b: Article) =>
+  new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
 
 export interface ArticleQuery {
   page?: number;
@@ -56,56 +40,26 @@ export async function getArticles({
   departmentSlug,
   excludeSlug,
 }: ArticleQuery = {}): Promise<Paginated<Article>> {
-  const db = getDb();
-  const offset = (page - 1) * perPage;
-  
-  // Build where conditions
-  const conditions = [];
-  conditions.push(eq(schema.articles.isPublished, true));
-  
+  let items = listArticles().filter((article) => article.isPublished);
+
   if (categorySlug) {
-    const category = await getCategoryBySlug(categorySlug);
-    if (category) conditions.push(eq(schema.articles.categoryId, category.id));
+    items = items.filter((article) => article.category.slug === categorySlug);
   }
-  
   if (departmentSlug) {
-    const department = await getDepartmentBySlug(departmentSlug);
-    if (department) conditions.push(eq(schema.articles.departmentId, department.id));
+    items = items.filter((article) => article.departmentSlug === departmentSlug);
   }
-  
   if (excludeSlug) {
-    conditions.push(not(eq(schema.articles.slug, excludeSlug)));
+    items = items.filter((article) => article.slug !== excludeSlug);
   }
-  
-  const whereClause = and(...conditions);
 
-  // Get total count
-  const [{ value: total }] = await db
-    .select({ value: count() })
-    .from(schema.articles)
-    .where(whereClause);
+  items = [...items].sort(byPublishedDesc);
 
+  const total = items.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
-
-  const rows = await db.query.articles.findMany({
-    where: whereClause,
-    orderBy: [desc(schema.articles.publishedAt)],
-    limit: perPage,
-    offset,
-    with: {
-      author: true,
-      category: true,
-      department: true,
-      tags: {
-        with: {
-          tag: true
-        }
-      }
-    }
-  });
+  const offset = (page - 1) * perPage;
 
   return {
-    items: rows.map(mapArticle),
+    items: items.slice(offset, offset + perPage),
     page,
     perPage,
     total,
@@ -114,298 +68,123 @@ export async function getArticles({
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const db = getDb();
-  const row = await db.query.articles.findFirst({
-    where: and(eq(schema.articles.slug, slug), eq(schema.articles.isPublished, true)),
-    with: {
-      author: true,
-      category: true,
-      department: true,
-      tags: {
-        with: {
-          tag: true
-        }
-      }
-    }
-  });
-
-  if (!row) return null;
-  return mapArticle(row);
+  const article = findArticleBySlug(slug);
+  return article && article.isPublished ? article : null;
 }
 
 /**
- * Admin-only: fetch an article by its UUID, regardless of publish status.
+ * Admin-only: fetch an article by its ID, regardless of publish status.
  * Used by the admin edit page where the URL contains the article ID.
  */
 export async function getArticleById(id: string): Promise<Article | null> {
-  const db = getDb();
-  const row = await db.query.articles.findFirst({
-    where: eq(schema.articles.id, id),
-    with: {
-      author: true,
-      category: true,
-      department: true,
-      tags: {
-        with: {
-          tag: true
-        }
-      }
-    }
-  });
-
-  if (!row) return null;
-  return mapArticle(row);
+  return findArticleById(id) ?? null;
 }
 
 export async function getAllArticleSlugs(): Promise<string[]> {
-  const db = getDb();
-  const rows = await db.select({ slug: schema.articles.slug }).from(schema.articles).where(eq(schema.articles.isPublished, true));
-  return rows.map((r) => r.slug);
+  return listArticles()
+    .filter((article) => article.isPublished)
+    .map((article) => article.slug);
 }
 
 export async function getFeaturedArticle(): Promise<Article | null> {
-  const db = getDb();
-  const row = await db.query.articles.findFirst({
-    where: and(eq(schema.articles.isFeatured, true), eq(schema.articles.isPublished, true)),
-    orderBy: [desc(schema.articles.publishedAt)],
-    with: {
-      author: true,
-      category: true,
-      department: true,
-      tags: { with: { tag: true } }
-    }
-  });
+  const published = listArticles()
+    .filter((article) => article.isPublished)
+    .sort(byPublishedDesc);
 
-  if (row) return mapArticle(row);
-
-  // Fallback to most recent if no featured
-  const fallback = await db.query.articles.findFirst({
-    where: eq(schema.articles.isPublished, true),
-    orderBy: [desc(schema.articles.publishedAt)],
-    with: {
-      author: true,
-      category: true,
-      department: true,
-      tags: { with: { tag: true } }
-    }
-  });
-
-  return fallback ? mapArticle(fallback) : null;
+  const featured = published.find((article) => article.isFeatured);
+  return featured ?? published[0] ?? null;
 }
 
 export async function getTrendingArticles(limit = 2, excludeSlug?: string): Promise<Article[]> {
-  const db = getDb();
-  const conditions = [eq(schema.articles.isPublished, true)];
-  if (excludeSlug) conditions.push(not(eq(schema.articles.slug, excludeSlug)));
-
-  const rows = await db.query.articles.findMany({
-    where: and(...conditions),
-    orderBy: [desc(schema.articles.views), desc(schema.articles.publishedAt)],
-    limit,
-    with: {
-      author: true,
-      category: true,
-      department: true,
-      tags: { with: { tag: true } }
-    }
-  });
-
-  return rows.map(mapArticle);
+  return listArticles()
+    .filter((article) => article.isPublished && article.slug !== excludeSlug)
+    .sort((a, b) => b.views - a.views || byPublishedDesc(a, b))
+    .slice(0, limit);
 }
 
 export async function getRelatedArticles(article: Article, limit = 3): Promise<Article[]> {
-  const db = getDb();
-  
-  // Try same category first
-  const sameCategoryRows = await db.query.articles.findMany({
-    where: and(
-      eq(schema.articles.isPublished, true),
-      not(eq(schema.articles.slug, article.slug)),
-      eq(schema.articles.categoryId, article.category.id)
-    ),
-    orderBy: [desc(schema.articles.publishedAt)],
-    limit,
-    with: { author: true, category: true, department: true, tags: { with: { tag: true } } }
-  });
+  const others = listArticles()
+    .filter((candidate) => candidate.isPublished && candidate.slug !== article.slug)
+    .sort(byPublishedDesc);
 
-  if (sameCategoryRows.length >= limit) {
-    return sameCategoryRows.map(mapArticle);
+  const sameCategory = others.filter((candidate) => candidate.category.id === article.category.id);
+  if (sameCategory.length >= limit) {
+    return sameCategory.slice(0, limit);
   }
 
-  const excludeSlugs = [article.slug, ...sameCategoryRows.map(r => r.slug)];
-  
-  const restConditions = [eq(schema.articles.isPublished, true)];
-  for (const slug of excludeSlugs) {
-    restConditions.push(not(eq(schema.articles.slug, slug)));
-  }
-
-  const otherRows = await db.query.articles.findMany({
-    where: and(...restConditions),
-    orderBy: [desc(schema.articles.publishedAt)],
-    limit: limit - sameCategoryRows.length,
-    with: { author: true, category: true, department: true, tags: { with: { tag: true } } }
-  });
-
-  return [...sameCategoryRows, ...otherRows].map(mapArticle);
+  const rest = others.filter((candidate) => candidate.category.id !== article.category.id);
+  return [...sameCategory, ...rest].slice(0, limit);
 }
 
 export async function getCategories(): Promise<Category[]> {
-  const db = getDb();
-  const rows = await db.select().from(schema.categories);
-  return rows.map(r => ({
-    id: r.id,
-    name: r.name,
-    slug: r.slug,
-    description: r.description ?? ''
-  }));
+  return allCategories;
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const db = getDb();
-  const [row] = await db.select().from(schema.categories).where(eq(schema.categories.slug, slug)).limit(1);
-  if (!row) return null;
-  return {
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    description: row.description ?? ''
-  };
+  return allCategories.find((category) => category.slug === slug) ?? null;
 }
 
 export async function getDepartments(): Promise<Department[]> {
-  const db = getDb();
-  const rows = await db.select().from(schema.departments);
-  return rows.map(r => ({
-    id: r.id,
-    name: r.name,
-    slug: r.slug,
-    abbreviation: r.abbreviation ?? undefined,
-    description: r.description ?? undefined
-  }));
+  return allDepartments;
 }
 
 export async function getDepartmentBySlug(slug: string): Promise<Department | null> {
-  const db = getDb();
-  const [row] = await db.select().from(schema.departments).where(eq(schema.departments.slug, slug)).limit(1);
-  if (!row) return null;
-  return {
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    abbreviation: row.abbreviation ?? undefined,
-    description: row.description ?? undefined
-  };
+  return allDepartments.find((department) => department.slug === slug) ?? null;
 }
 
 export async function getUsers() {
-  const db = getDb();
-  return await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users);
+  return Object.values(authors).map((author) => ({ id: author.id, name: author.name }));
 }
 
 /**
  * Dashboard statistics for the admin overview page.
  */
 export async function getAdminStats() {
-  const db = getDb();
+  const articles = listArticles();
+  const published = articles.filter((article) => article.isPublished);
 
-  const [totalArticles] = await db.select({ value: count() }).from(schema.articles);
-  const [totalUsers] = await db.select({ value: count() }).from(schema.users);
-
-  // Articles published this month
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const allArticles = await db.select({ publishedAt: schema.articles.publishedAt }).from(schema.articles).where(eq(schema.articles.isPublished, true));
-  const publishedThisMonth = allArticles.filter(a => a.publishedAt && new Date(a.publishedAt) >= startOfMonth).length;
+  const publishedThisMonth = published.filter(
+    (article) => new Date(article.publishedAt) >= startOfMonth,
+  ).length;
 
   return {
-    totalArticles: totalArticles.value,
+    totalArticles: articles.length,
     publishedThisMonth,
-    totalAuthors: totalUsers.value,
+    totalAuthors: Object.keys(authors).length,
   };
 }
 
 export async function getUpcomingEvents(limit?: number, now = new Date()): Promise<CampusEvent[]> {
-  const db = getDb();
-  const rows = await db.query.events.findMany({
-    where: eq(schema.events.isPublished, true), // Filtering properly requires raw SQL for Date > now if we don't have good operators, but we can fetch and filter for simplicity or use Drizzle operators.
-    // For simplicity with Drizzle and timezones, we fetch recent/upcoming and filter in JS. 
-  });
-  
-  const upcoming = rows
-    .filter(e => new Date(e.endsAt ?? e.startsAt).getTime() >= now.getTime())
+  const upcoming = allEvents
+    .filter((event) => new Date(event.endsAt ?? event.startsAt).getTime() >= now.getTime())
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-    
-  const list = upcoming.length > 0 ? upcoming : rows.sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-  
-  const mapped = list.map(e => ({
-    id: e.id,
-    title: e.title,
-    slug: e.slug,
-    description: e.description ?? '',
-    location: e.location ?? '',
-    startsAt: e.startsAt.toISOString(),
-    endsAt: e.endsAt?.toISOString(),
-    allDay: e.allDay
-  }));
 
-  return typeof limit === 'number' ? mapped.slice(0, limit) : mapped;
+  const list =
+    upcoming.length > 0
+      ? upcoming
+      : [...allEvents].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+
+  return typeof limit === 'number' ? list.slice(0, limit) : list;
 }
 
 export async function getPastEvents(limit?: number, now = new Date()): Promise<CampusEvent[]> {
-  const db = getDb();
-  const rows = await db.query.events.findMany({
-    where: eq(schema.events.isPublished, true)
-  });
-  
-  const past = rows
-    .filter(e => new Date(e.endsAt ?? e.startsAt).getTime() < now.getTime())
+  const past = allEvents
+    .filter((event) => new Date(event.endsAt ?? event.startsAt).getTime() < now.getTime())
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
-    
-  const mapped = past.map(e => ({
-    id: e.id,
-    title: e.title,
-    slug: e.slug,
-    description: e.description ?? '',
-    location: e.location ?? '',
-    startsAt: e.startsAt.toISOString(),
-    endsAt: e.endsAt?.toISOString(),
-    allDay: e.allDay
-  }));
 
-  return typeof limit === 'number' ? mapped.slice(0, limit) : mapped;
+  return typeof limit === 'number' ? past.slice(0, limit) : past;
 }
 
 export async function getCertificateCourses(): Promise<CertificateCourse[]> {
-  const db = getDb();
-  const rows = await db.select().from(schema.certificateCourses);
-  return rows.map(r => ({
-    id: r.id,
-    name: r.name,
-    slug: r.slug
-  }));
+  return allCertificateCourses;
 }
 
 export async function getEventBySlug(slug: string): Promise<CampusEvent | null> {
-  const db = getDb();
-  const row = await db.query.events.findFirst({
-    where: and(eq(schema.events.slug, slug), eq(schema.events.isPublished, true))
-  });
-  
-  if (!row) return null;
-  return {
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    description: row.description ?? '',
-    location: row.location ?? '',
-    startsAt: row.startsAt.toISOString(),
-    endsAt: row.endsAt?.toISOString(),
-    allDay: row.allDay
-  };
+  return allEvents.find((event) => event.slug === slug) ?? null;
 }
 
 export async function getAllEventSlugs(): Promise<string[]> {
-  const db = getDb();
-  const rows = await db.select({ slug: schema.events.slug }).from(schema.events).where(eq(schema.events.isPublished, true));
-  return rows.map(r => r.slug);
+  return allEvents.map((event) => event.slug);
 }

@@ -62,7 +62,7 @@ export default async function EditArticlePage({ params }: { params: { id: string
               id="content" 
               name="content" 
               required 
-              defaultValue={article.content.map((c: any) => c.text || '').join('\n\n')}
+              defaultValue={article.content.map((c) => c.text || '').join('\n\n')}
               rows={15}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 outline-none resize-y font-mono text-sm"
             />

@@ -1,12 +1,22 @@
 import Link from 'next/link'
 import { LayoutDashboard, FileText, Settings, Users, LogOut } from 'lucide-react'
 import { signout } from './actions'
+import { getSessionUser } from '@/lib/auth/server'
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const user = await getSessionUser()
+  const initials =
+    user?.name
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) ?? 'A'
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Sidebar Navigation */}
@@ -52,9 +62,9 @@ export default function AdminLayout({
         <header className="h-16 bg-white border-b border-slate-200 flex items-center px-8 justify-end">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">
-              A
+              {initials}
             </div>
-            <span className="text-sm font-medium text-slate-700">Administrator</span>
+            <span className="text-sm font-medium text-slate-700">{user?.name ?? 'Administrator'}</span>
           </div>
         </header>
 

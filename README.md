@@ -20,6 +20,34 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+News, events and department content are served from a built-in seed dataset
+(`src/lib/content`), so the public site is fully populated with no database.
+
+---
+
+## 🔐 Demo Access
+
+Authentication is currently a **hardcoded demo** (no Supabase/database required)
+so the app can be signed into out of the box. Real database-backed auth is the
+next milestone. Two sign-in entry points:
+
+- **Students & lecturers:** [`/login`](http://localhost:3000/login) → the campus
+  news **Portal** (`/portal`)
+- **Administrators:** [`/admin/login`](http://localhost:3000/admin/login) → the
+  **Admin dashboard** (`/admin`)
+
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| Administrator | `admin@pti.edu.ng` | `admin123` |
+| Lecturer | `lecturer@pti.edu.ng` | `lecturer123` |
+| Lecturer | `amaka.okafor@pti.edu.ng` | `lecturer123` |
+| Student | `student@pti.edu.ng` | `student123` |
+| Student | `blessing.okowa@pti.edu.ng` | `student123` |
+
+The full list is defined in `src/lib/auth/demo-users.ts`, and each login page
+also displays the relevant credentials for convenience. These accounts and the
+cookie-based demo session are throwaway plumbing — **not** a secure auth system.
+
 ---
 
 ## 🌟 Key Features

@@ -1,43 +1,32 @@
-import { login } from './actions'
+import Link from 'next/link'
+import { SignInForm } from '@/components/auth/SignInForm'
+import { DemoCredentials } from '@/components/auth/DemoCredentials'
 
-export default function LoginPage() {
+export default async function AdminLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const { error } = await searchParams
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50">
+    <div className="flex items-center justify-center min-h-screen bg-slate-50 px-4 py-12">
       <div className="max-w-md w-full p-8 bg-white shadow-xl rounded-2xl">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold font-sans text-slate-900 tracking-tight">Admin Portal</h1>
           <p className="text-slate-500 mt-2">Sign in to manage campus news and articles.</p>
         </div>
-        
-        <form className="flex flex-col gap-5">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="email">Email</label>
-            <input 
-              id="email" 
-              name="email" 
-              type="email" 
-              required 
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-green-600 outline-none transition-colors"
-              placeholder="admin@pti.edu.ng"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1" htmlFor="password">Password</label>
-            <input 
-              id="password" 
-              name="password" 
-              type="password" 
-              required 
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-green-600 outline-none transition-colors"
-            />
-          </div>
-          <button 
-            formAction={login} 
-            className="w-full bg-green-700 text-white font-semibold py-2.5 rounded-lg hover:bg-green-800 transition-colors mt-2"
-          >
-            Sign In
-          </button>
-        </form>
+
+        <SignInForm origin="admin" error={Boolean(error)} defaultEmail="admin@pti.edu.ng" />
+
+        <DemoCredentials roles={['admin']} />
+
+        <p className="mt-6 text-center text-sm text-slate-500">
+          Student or lecturer?{' '}
+          <Link href="/login" className="font-medium text-green-700 hover:underline">
+            Sign in here
+          </Link>
+        </p>
       </div>
     </div>
   )
