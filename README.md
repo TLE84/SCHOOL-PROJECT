@@ -45,6 +45,12 @@ promote an existing account with
 `npm run auth:set-role -- their@email.com admin`. Roles are stored in the
 account's `app_metadata`, which users cannot edit.
 
+Sign-up asks for the person's department (students and lecturers alike).
+Afterwards they can edit their own name, department, password — and, for staff,
+their job title — at [`/portal/settings`](http://localhost:3000/portal/settings);
+administrators get the same forms on their own Settings page. Roles and email
+addresses are not self-editable.
+
 `npm run auth:seed-users` creates a starter set of confirmed accounts (1 admin,
 2 lecturers, 2 students — the same people as the demo accounts below) with
 freshly generated passwords, printed once. Re-running it leaves existing

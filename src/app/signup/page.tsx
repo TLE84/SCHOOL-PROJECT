@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { SignUpForm } from '@/components/auth/SignUpForm'
+import { getDepartments } from '@/lib/content/queries'
 
 export const metadata: Metadata = {
   title: 'Create Account',
@@ -13,7 +14,7 @@ export default async function SignUpPage({
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
-  const { error } = await searchParams
+  const [{ error }, departments] = await Promise.all([searchParams, getDepartments()])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
@@ -36,7 +37,7 @@ export default async function SignUpPage({
           </p>
         </div>
 
-        <SignUpForm error={error} />
+        <SignUpForm error={error} departments={departments} />
 
         <p className="mt-6 text-center text-sm text-slate-500">
           Already have an account?{' '}

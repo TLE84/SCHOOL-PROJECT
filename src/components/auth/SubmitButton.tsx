@@ -10,6 +10,8 @@ interface SubmitButtonProps {
   children: React.ReactNode
   /** Label while the request is in flight, e.g. "Signing in…". */
   pendingLabel: string
+  /** `block` fills the form (auth pages); `inline` hugs its label (settings). */
+  variant?: 'block' | 'inline'
 }
 
 /**
@@ -19,7 +21,12 @@ interface SubmitButtonProps {
  * including the redirect after a successful sign-in. A disabled default button
  * also stops Enter in a field from resubmitting.
  */
-export function SubmitButton({ formAction, children, pendingLabel }: SubmitButtonProps) {
+export function SubmitButton({
+  formAction,
+  children,
+  pendingLabel,
+  variant = 'block',
+}: SubmitButtonProps) {
   const { pending } = useFormStatus()
 
   return (
@@ -27,7 +34,9 @@ export function SubmitButton({ formAction, children, pendingLabel }: SubmitButto
       formAction={formAction}
       disabled={pending}
       aria-busy={pending}
-      className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-green-700 py-2.5 font-semibold text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-green-700/70"
+      className={`flex items-center justify-center gap-2 rounded-lg bg-green-700 font-semibold text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-green-700/70 ${
+        variant === 'block' ? 'mt-2 w-full py-2.5' : 'self-start px-5 py-2.5 text-sm'
+      }`}
     >
       {pending ? (
         <>

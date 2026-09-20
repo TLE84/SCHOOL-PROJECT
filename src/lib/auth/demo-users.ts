@@ -94,6 +94,7 @@ export function registerDemoUser(input: {
   email: string;
   password: string;
   role: SignupRole;
+  department?: string;
 }): DemoUser {
   const user: DemoUser = {
     id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -101,7 +102,23 @@ export function registerDemoUser(input: {
     email: input.email.trim(),
     password: input.password,
     role: input.role,
+    department: input.department?.trim() || undefined,
   };
   demoUsers.push(user);
+  return user;
+}
+
+/** Apply profile edits to an in-memory demo account (demo mode only). */
+export function updateDemoUser(
+  id: string,
+  changes: { name?: string; department?: string; jobTitle?: string; password?: string },
+): DemoUser | null {
+  const user = findDemoUserById(id);
+  if (!user) return null;
+
+  if (changes.name) user.name = changes.name.trim();
+  if (changes.department !== undefined) user.department = changes.department.trim() || undefined;
+  if (changes.jobTitle !== undefined) user.jobTitle = changes.jobTitle.trim() || undefined;
+  if (changes.password) user.password = changes.password;
   return user;
 }

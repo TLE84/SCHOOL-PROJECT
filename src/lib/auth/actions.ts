@@ -7,6 +7,7 @@ import { isSupabaseAuthEnabled } from '@/utils/supabase/config';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { siteUrl } from '@/lib/site';
+import { getDepartments } from '@/lib/content/queries';
 import { authenticateDemoUser, findDemoUserByEmail, registerDemoUser } from './demo-users';
 import { createDemoSession, destroyDemoSession } from './server';
 import { homePathForRole } from './session';
@@ -88,6 +89,7 @@ export async function signUp(formData: FormData): Promise<void> {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
   const role = String(formData.get('role') ?? '');
+  const department = String(formData.get('department') ?? '').trim();
 
   if (!name || !email || !password) {
     redirect('/signup?error=missing');
@@ -101,9 +103,12 @@ export async function signUp(formData: FormData): Promise<void> {
   if (role !== 'student' && role !== 'lecturer') {
     redirect('/signup?error=role');
   }
+  if (!(await isKnownDepartment(department))) {
+    redirect('/signup?error=department');
+  }
 
   if (isSupabaseAuthEnabled()) {
-    await signUpWithSupabase({ name, email, password, role });
+    await signUpWithSupabase({ name, email, password, role, department });
     return;
   }
 
@@ -111,10 +116,17 @@ export async function signUp(formData: FormData): Promise<void> {
     redirect('/signup?error=exists');
   }
 
-  const user = registerDemoUser({ name, email, password, role: role as SignupRole });
+  const user = registerDemoUser({ name, email, password, role: role as SignupRole, department });
   await createDemoSession(user);
   revalidatePath('/', 'layout');
   redirect(homePathForRole(user.role));
+}
+
+/** Only a department the site actually lists may be stored on a profile. */
+async function isKnownDepartment(name: string): Promise<boolean> {
+  if (!name) return false;
+  const departments = await getDepartments();
+  return departments.some((department) => department.name === name);
 }
 
 async function signUpWithSupabase(input: {
@@ -122,13 +134,14 @@ async function signUpWithSupabase(input: {
   email: string;
   password: string;
   role: SignupRole;
+  department: string;
 }): Promise<void> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
     password: input.password,
     options: {
-      data: { full_name: input.name },
+      data: { full_name: input.name, department: input.department },
       emailRedirectTo: `${await requestOrigin()}/auth/confirm`,
     },
   });

@@ -1,4 +1,6 @@
+import type { Department } from '@/lib/content/types'
 import { signUp } from '@/lib/auth/actions'
+import { DepartmentSelect } from './DepartmentSelect'
 import { SubmitButton } from './SubmitButton'
 
 const errorMessages: Record<string, string> = {
@@ -6,6 +8,7 @@ const errorMessages: Record<string, string> = {
   email: 'Please enter a valid email address.',
   password: 'Your password must be at least 6 characters.',
   role: 'Please choose whether you are a student or a lecturer.',
+  department: 'Please choose your department.',
   exists: 'An account with that email already exists. Try signing in instead.',
   rate: 'Too many sign-up emails have been sent recently. Please try again in a little while.',
   disabled: 'New sign-ups are currently closed.',
@@ -17,7 +20,7 @@ const roleOptions = [
   { value: 'lecturer', label: 'Lecturer' },
 ] as const
 
-export function SignUpForm({ error }: { error?: string }) {
+export function SignUpForm({ error, departments }: { error?: string; departments: Department[] }) {
   const message = error ? errorMessages[error] ?? 'Something went wrong. Please try again.' : null
 
   return (
@@ -88,6 +91,9 @@ export function SignUpForm({ error }: { error?: string }) {
           ))}
         </div>
       </fieldset>
+
+      {/* Students and lecturers both belong to a department. */}
+      <DepartmentSelect departments={departments} required />
 
       <SubmitButton formAction={signUp} pendingLabel="Creating account…">
         Create account

@@ -46,6 +46,12 @@ export default async function PortalLayout({
             <Link href="/" className="text-sm font-medium text-slate-500 hover:text-slate-900">
               Public site
             </Link>
+            <Link
+              href="/portal/settings"
+              className="text-sm font-medium text-slate-500 hover:text-slate-900"
+            >
+              Settings
+            </Link>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-700">
                 {initials}
