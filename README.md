@@ -4,6 +4,8 @@ Official digital information hub for the **Petroleum Training Institute (PTI), E
 
 Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Drizzle ORM**, and **Supabase SSR**.
 
+**Live site:** <https://pti-school-project.vercel.app>
+
 ---
 
 ## Quick Start (Zero Config)
@@ -198,11 +200,12 @@ In the Supabase dashboard:
    <p style="font-size:28px;letter-spacing:6px;font-weight:bold">{{ .Token }}</p>
    <p>The code expires in one hour. If you didn't sign up, ignore this email.</p>
    ```
-2. **Authentication → URL Configuration**: set **Site URL** to the live site
-   (not `http://localhost:3000`, the default) and add both
-   `https://<your-domain>/**` and `http://localhost:3000/**` to **Redirect
-   URLs**. Supabase falls back to the Site URL whenever a redirect target is not
-   on that list, which is what sends people to a dead page.
+2. **Authentication → URL Configuration**: set **Site URL** to
+   `https://pti-school-project.vercel.app` (not `http://localhost:3000`, the
+   default) and add both `https://pti-school-project.vercel.app/**` and
+   `http://localhost:3000/**` to **Redirect URLs**. Supabase falls back to the
+   Site URL whenever a redirect target is not on that list, which is what sends
+   people to a dead page.
 3. **Authentication → Emails → SMTP Settings**: the built-in mailer only
    delivers to members of your Supabase organisation and allows a few messages
    an hour. Add your own SMTP before real sign-ups.
@@ -227,9 +230,9 @@ with the browser-visible publishable key) can read and write nothing.
 2. Import the project on [Vercel](https://vercel.com/new).
 3. Framework settings (Next.js), build command (`npm run build`), and output directory are automatically detected.
 4. Add the variables above in **Project Settings → Environment Variables**, then redeploy (`NEXT_PUBLIC_*` values are baked in at build time).
-5. In Supabase, open **Authentication → URL Configuration**: set **Site URL** to the production URL and add `https://<your-domain>/**` (and `http://localhost:3000/**` for local work) to **Redirect URLs**, so confirmation emails link back to the site.
+5. In Supabase, open **Authentication → URL Configuration**: set **Site URL** to `https://pti-school-project.vercel.app` and add `https://pti-school-project.vercel.app/**` (and `http://localhost:3000/**` for local work) to **Redirect URLs**, so confirmation emails link back to the site.
 6. Recommended: set the Vercel **Function Region** to the one closest to the database (for a Supabase project in `eu-west-1`, that's Dublin, `dub1`). Every page makes several queries, so this matters.
-7. Open **/admin/settings** on the deployment — the **Backend status** panel confirms the database and auth are connected.
+7. Open [`/admin/settings`](https://pti-school-project.vercel.app/admin/settings) on the deployment — the **Backend status** panel confirms the database and auth are connected.
 
 ---
 
