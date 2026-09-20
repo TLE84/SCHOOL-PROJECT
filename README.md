@@ -45,6 +45,14 @@ promote an existing account with
 `npm run auth:set-role -- their@email.com admin`. Roles are stored in the
 account's `app_metadata`, which users cannot edit.
 
+New accounts confirm their email with a **code, not a link**: sign-up sends a
+numeric code and the person types it in at `/verify` (with a "Send a new code"
+button). Nothing depends on the email being opened in the same browser. For the
+code to appear, Supabase's **Confirm signup** template must include
+`{{ .Token }}` — see [Supabase setup](#supabase-setup) below. Links still work
+for anything already sent: `/auth/confirm` (and `/auth/callback`) handle them,
+and a link that lands on the wrong path is forwarded there.
+
 Sign-up asks for the person's department (students and lecturers alike).
 Afterwards they can edit their own name, department, password — and, for staff,
 their job title — at [`/portal/settings`](http://localhost:3000/portal/settings);
@@ -177,6 +185,27 @@ after changing them.
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (`NEXT_PUBLIC_SUPABASE_ANON_KEY` also accepted). With the URL, turns on Supabase Auth and disables the demo accounts. |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Server-only** secret key. Saves the role chosen at sign-up and powers the admin Users page. Never prefix with `NEXT_PUBLIC_`. |
+
+### Supabase setup
+
+In the Supabase dashboard:
+
+1. **Authentication → Emails → Confirm signup**: include `{{ .Token }}` so the
+   email carries a code. For example:
+   ```html
+   <h2>Confirm your PTI News account</h2>
+   <p>Enter this code to finish signing up:</p>
+   <p style="font-size:28px;letter-spacing:6px;font-weight:bold">{{ .Token }}</p>
+   <p>The code expires in one hour. If you didn't sign up, ignore this email.</p>
+   ```
+2. **Authentication → URL Configuration**: set **Site URL** to the live site
+   (not `http://localhost:3000`, the default) and add both
+   `https://<your-domain>/**` and `http://localhost:3000/**` to **Redirect
+   URLs**. Supabase falls back to the Site URL whenever a redirect target is not
+   on that list, which is what sends people to a dead page.
+3. **Authentication → Emails → SMTP Settings**: the built-in mailer only
+   delivers to members of your Supabase organisation and allows a few messages
+   an hour. Add your own SMTP before real sign-ups.
 
 ### First-time database setup
 

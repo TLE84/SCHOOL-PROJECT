@@ -8,7 +8,6 @@ const errorMessages: Record<string, string> = {
 }
 
 const noticeMessages: Record<string, string> = {
-  'check-email': 'Almost done — we’ve emailed you a confirmation link. Confirm your address, then sign in.',
   confirmed: 'Your email is confirmed. Sign in to continue.',
 }
 

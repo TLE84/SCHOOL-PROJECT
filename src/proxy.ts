@@ -16,6 +16,9 @@ import { updateSession, withSessionCookies } from '@/utils/supabase/proxy'
  * not the only one.
  */
 export async function proxy(request: NextRequest) {
+  const misdirected = emailLinkLandedElsewhere(request)
+  if (misdirected) return NextResponse.redirect(misdirected)
+
   let response: NextResponse
   let user: SessionUser | null
 
@@ -53,6 +56,27 @@ export async function proxy(request: NextRequest) {
   }
 
   return response
+}
+
+/**
+ * Supabase sends email links to its own /auth/v1/verify, which then redirects
+ * to `redirect_to` — but only if that URL is on the project's Redirect URLs
+ * list. Otherwise it falls back to the project's Site URL, dropping people on
+ * the home page (or a path that does not exist) with the token still in the
+ * query. Spot that and forward it to the route that can complete it.
+ */
+function emailLinkLandedElsewhere(request: NextRequest): URL | null {
+  const { pathname, searchParams } = request.nextUrl
+  if (pathname.startsWith('/auth/')) return null
+
+  const hasToken =
+    (searchParams.has('token_hash') && searchParams.has('type')) ||
+    (searchParams.has('code') && pathname === '/')
+  if (!hasToken) return null
+
+  const target = new URL('/auth/confirm', request.url)
+  searchParams.forEach((value, key) => target.searchParams.set(key, value))
+  return target
 }
 
 export const config = {

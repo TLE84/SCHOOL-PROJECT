@@ -38,7 +38,12 @@ export async function signIn(formData: FormData): Promise<void> {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error || !data.user) {
-      redirect(loginPath(origin, error?.code === 'email_not_confirmed' ? 'unconfirmed' : 'credentials'));
+      // Not confirmed yet → straight to the code form, where they can also
+      // ask for a fresh code.
+      if (error?.code === 'email_not_confirmed') {
+        redirect(`/verify?email=${encodeURIComponent(email)}&notice=unconfirmed`);
+      }
+      redirect(loginPath(origin, 'credentials'));
     }
 
     const user = sessionUserFromSupabase(data.user);
@@ -79,8 +84,9 @@ const SIGNUP_ERRORS: Record<string, string> = {
  * Supabase: the account is created with Supabase Auth, and the chosen role is
  * written to `app_metadata` with the service role key — users can edit their
  * own `user_metadata` but not `app_metadata`, so nobody can grant themselves a
- * role later. If the project requires email confirmation (the default), the
- * person is asked to check their inbox; otherwise they are signed straight in.
+ * role later. If the project requires email confirmation (the default), they
+ * continue at /verify and type in the emailed code; otherwise they are signed
+ * straight in.
  *
  * Demo: an in-memory account, signed in immediately.
  */
@@ -179,7 +185,8 @@ async function signUpWithSupabase(input: {
     redirect(homePathForRole(user.role));
   }
 
-  redirect('/login?notice=check-email');
+  // Email confirmation is on: finish at the code form.
+  redirect(`/verify?email=${encodeURIComponent(input.email)}`);
 }
 
 /** Set the account's role in `app_metadata` (service role only). */
